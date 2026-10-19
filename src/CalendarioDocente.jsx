@@ -81,6 +81,12 @@ const formatDateIso = (date) => {
   return `${y}-${m}-${d}`;
 };
 
+const formatDateDDMMYYYY = (isoStr) => {
+  if (!isoStr) return '';
+  const [y, m, d] = isoStr.split('-');
+  return `${d}/${m}/${y}`;
+};
+
 const getMondayIso = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
@@ -100,8 +106,8 @@ export default function DocenteScheduleTool() {
       fechaInicio: '2026-03-01',
       fechaFin: '2026-06-30',
       dias: {
-        2: { activo: true, horaInicio: '19:00', horaFin: '21:00' }, // Martes
-        4: { activo: true, horaInicio: '19:00', horaFin: '21:00' }  // Jueves
+        2: { activo: true, horaInicio: '19:00', horaFin: '21:00' },
+        4: { activo: true, horaInicio: '19:00', horaFin: '21:00' }
       },
       excepciones: {
         '2026-04-14': { tipo: 'MODIFICAR', horaInicio: '18:00', horaFin: '21:00', motivo: 'Recuperación de sesión' }
@@ -113,7 +119,7 @@ export default function DocenteScheduleTool() {
       fechaInicio: '2026-08-15',
       fechaFin: '2026-11-30',
       dias: {
-        6: { activo: true, horaInicio: '08:00', horaFin: '12:00' } // Sábado
+        6: { activo: true, horaInicio: '08:00', horaFin: '12:00' }
       },
       excepciones: {}
     }
@@ -131,7 +137,6 @@ export default function DocenteScheduleTool() {
     motivo: ''
   });
 
-  // Limpiar todas las asignaciones y el nombre del docente
   const handleLimpiarTodo = () => {
     if (window.confirm('¿Estás seguro de que deseas eliminar todas las asignaciones y limpiar el nombre del docente?')) {
       setDocenteNombre('');
@@ -140,7 +145,6 @@ export default function DocenteScheduleTool() {
     }
   };
 
-  // Generador de sesiones proyectadas
   const todasLasSesiones = useMemo(() => {
     const sesiones = [];
 
@@ -211,7 +215,6 @@ export default function DocenteScheduleTool() {
     return sesiones;
   }, [asignaciones]);
 
-  // Auditoría cruzada de choques de horarios
   const mapaDeChoques = useMemo(() => {
     const choques = {};
     const porFecha = {};
@@ -250,7 +253,6 @@ export default function DocenteScheduleTool() {
     return choques;
   }, [todasLasSesiones]);
 
-  // Recuento de horas por asignación
   const resumenPorAsignacion = useMemo(() => {
     return asignaciones.map((asig) => {
       const sesionesAsig = todasLasSesiones.filter((s) => s.activa && s.asignacionId === asig.id);
@@ -266,7 +268,6 @@ export default function DocenteScheduleTool() {
     });
   }, [asignaciones, todasLasSesiones]);
 
-  // Métricas agregadas de la asignación seleccionada
   const metricas = useMemo(() => {
     let totalHoras = 0;
     let totalSesiones = 0;
@@ -289,29 +290,31 @@ export default function DocenteScheduleTool() {
     return { totalHoras, totalSesiones, porMes, porSemana };
   }, [todasLasSesiones, asignacionSeleccionadaId]);
 
-  // Exportación a Excel (.xlsx) con fondos, bordes, día numérico y mes limpio
   const descargarExcelResumen = () => {
     if (asignaciones.length === 0) {
       alert('No hay asignaciones para exportar.');
       return;
     }
 
-    // 1. Estructura de filas para la tabla izquierda
     const leftRows = [
-      ['Día', 'Número de día', 'Cantidad de horas', 'Mes', 'Asignación']
+      ['Día', 'Fecha', 'N° Horas', 'Mes', 'Asignación']
     ];
 
     const sesionesEfectivas = todasLasSesiones
       .filter((s) => s.activa)
       .sort((a, b) => a.fecha.localeCompare(b.fecha));
 
+    let sumaTotalHorasDetalle = 0;
+
     sesionesEfectivas.forEach((s) => {
+      sumaTotalHorasDetalle += s.duracionHoras;
+
       const [year, month, day] = s.fecha.split('-');
-      const numeroDia = parseInt(day, 10); // Solo el número del día (ej. 24)
+      const numeroDia = parseInt(day, 10); // Solo el número de día
 
       const fechaObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
       const mesStr = fechaObj.toLocaleString('es-ES', { month: 'long' });
-      const mesLimpio = mesStr.charAt(0).toUpperCase() + mesStr.slice(1); // Solo el nombre del mes sin el año
+      const mesLimpio = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
 
       leftRows.push([
         s.nombreDia,
@@ -322,9 +325,16 @@ export default function DocenteScheduleTool() {
       ]);
     });
 
-    // 2. Estructura de filas para la sección derecha
+    leftRows.push([
+      '',
+      'TOTAL',
+      sumaTotalHorasDetalle,
+      'horas',
+      ''
+    ]);
+
     const rightRows = [];
-    const rightMeta = []; // Guarda el tipo de cada fila derecha: 'title', 'header', 'data', 'empty'
+    const rightMeta = [];
 
     asignaciones.forEach((asig, index) => {
       if (index > 0) {
@@ -332,11 +342,9 @@ export default function DocenteScheduleTool() {
         rightMeta.push('empty');
       }
 
-      // Nombre de la materia sobre su tabla semanal
       rightRows.push([asig.materia, '']);
       rightMeta.push('title');
 
-      // Encabezado de la tabla semanal
       rightRows.push(['Día', 'Horario']);
       rightMeta.push('header');
 
@@ -355,7 +363,6 @@ export default function DocenteScheduleTool() {
       }
     });
 
-    // 3. Fusión en matriz 2D con columna vacía (F / índice 5)
     const totalFilas = Math.max(leftRows.length, rightRows.length);
     const matrizFinal = [];
 
@@ -369,7 +376,6 @@ export default function DocenteScheduleTool() {
 
     const worksheet = XLSX.utils.aoa_to_sheet(matrizFinal);
 
-    // 4. Definición de estilos (Bordes, Colores de fondo, Fuentes)
     const borderStyle = {
       top: { style: 'thin', color: { rgb: 'CBD5E1' } },
       bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
@@ -377,7 +383,6 @@ export default function DocenteScheduleTool() {
       right: { style: 'thin', color: { rgb: 'CBD5E1' } }
     };
 
-    // Estilo para encabezado de la tabla de sesiones (Slate 800)
     const headerLeftStyle = {
       fill: { fgColor: { rgb: '1E293B' } },
       font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
@@ -390,7 +395,18 @@ export default function DocenteScheduleTool() {
       }
     };
 
-    // Estilo para el título de la materia en el horario semanal (Índigo 800)
+    const totalRowStyle = (align = 'center') => ({
+      fill: { fgColor: { rgb: 'F1F5F9' } },
+      font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
+      alignment: { horizontal: align, vertical: 'center' },
+      border: {
+        top: { style: 'medium', color: { rgb: '94A3B8' } },
+        bottom: { style: 'medium', color: { rgb: '94A3B8' } },
+        left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+        right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+      }
+    });
+
     const titleRightStyle = {
       fill: { fgColor: { rgb: '3730A3' } },
       font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
@@ -398,7 +414,6 @@ export default function DocenteScheduleTool() {
       border: borderStyle
     };
 
-    // Estilo para sub-encabezado "Día" y "Horario" (Slate 200)
     const headerRightStyle = {
       fill: { fgColor: { rgb: 'E2E8F0' } },
       font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1E293B' } },
@@ -406,31 +421,33 @@ export default function DocenteScheduleTool() {
       border: borderStyle
     };
 
-    // Estilos generales de datos
     const dataCellStyle = (align = 'left') => ({
       font: { name: 'Calibri', sz: 10 },
       alignment: { horizontal: align, vertical: 'center' },
       border: borderStyle
     });
 
-    // 5. Aplicar estilos celda por celda
-    // A-E: Columnas 0 a 4 (Tabla izquierda de sesiones)
+    const indiceFilaTotal = leftRows.length - 1;
+
     for (let r = 0; r < leftRows.length; r++) {
       for (let c = 0; c < 5; c++) {
         const cellRef = XLSX.utils.encode_cell({ r, c });
-        if (!worksheet[cellRef]) continue;
+        if (!worksheet[cellRef]) {
+          worksheet[cellRef] = { t: 's', v: '' };
+        }
 
         if (r === 0) {
           worksheet[cellRef].s = headerLeftStyle;
+        } else if (r === indiceFilaTotal) {
+          const align = c === 1 || c === 2 || c === 3 ? 'center' : 'left';
+          worksheet[cellRef].s = totalRowStyle(align);
         } else {
-          // Centrar número de día (c=1), horas (c=2) y mes (c=3)
           const align = c === 1 || c === 2 || c === 3 ? 'center' : 'left';
           worksheet[cellRef].s = dataCellStyle(align);
         }
       }
     }
 
-    // G-H: Columnas 6 y 7 (Tabla derecha de horarios semanales)
     for (let r = 0; r < rightRows.length; r++) {
       const tipoFila = rightMeta[r];
       if (tipoFila === 'empty') continue;
@@ -451,16 +468,15 @@ export default function DocenteScheduleTool() {
       }
     }
 
-    // Ancho de columnas
     worksheet['!cols'] = [
-      { wch: 14 }, // A: Día
-      { wch: 18 }, // B: Número de día
-      { wch: 18 }, // C: Cantidad de horas
-      { wch: 16 }, // D: Mes
-      { wch: 38 }, // E: Asignación
-      { wch: 6 },  // F: Vacía
-      { wch: 22 }, // G: Día
-      { wch: 28 }  // H: Horario
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 38 },
+      { wch: 6 },
+      { wch: 22 },
+      { wch: 28 }
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -518,7 +534,7 @@ export default function DocenteScheduleTool() {
     <div className="min-h-screen bg-slate-50 text-slate-900 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Encabezado con Botón de Descarga Excel y Botón Limpiar Todo */}
+        {/* Encabezado */}
         <header className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -538,20 +554,18 @@ export default function DocenteScheduleTool() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
-            {/* Botón Limpiar Todo */}
             <button
               onClick={handleLimpiarTodo}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition"
-              title="Borrar todas las asignaciones y el nombre del docente"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-semibold transition cursor-pointer"
+              title="Borrar todas las asignaciones y limpiar el nombre"
             >
               <span>🗑️</span>
               Limpiar Todo
             </button>
 
-            {/* Botón Descargar Excel */}
             <button
               onClick={descargarExcelResumen}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm cursor-pointer"
               title="Descargar tabla con estilos y bordes en Excel"
             >
               <span>📊</span>
@@ -581,14 +595,14 @@ export default function DocenteScheduleTool() {
           </div>
         </header>
 
-        {/* Selector de Asignaciones y Pestañas */}
+        {/* Pestañas y selector de asignaciones */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="flex flex-wrap gap-2">
             {asignaciones.map((asig) => (
               <button
                 key={asig.id}
                 onClick={() => setAsignacionSeleccionadaId(asig.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                   asig.id === asignacionSeleccionadaId
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
@@ -599,7 +613,7 @@ export default function DocenteScheduleTool() {
             ))}
             <button
               onClick={agregarAsignacion}
-              className="px-3 py-2 rounded-lg text-sm font-medium border border-dashed border-indigo-400 text-indigo-600 hover:bg-indigo-50"
+              className="px-3 py-2 rounded-lg text-sm font-medium border border-dashed border-indigo-400 text-indigo-600 hover:bg-indigo-50 cursor-pointer"
             >
               + Añadir otra asignación
             </button>
@@ -608,25 +622,25 @@ export default function DocenteScheduleTool() {
           <div className="inline-flex rounded-lg bg-slate-200 p-1 text-xs font-medium">
             <button
               onClick={() => setActiveTab('calendario')}
-              className={`px-3 py-1.5 rounded-md transition ${activeTab === 'calendario' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-md transition cursor-pointer ${activeTab === 'calendario' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
             >
               Fechas y Sesiones
             </button>
             <button
               onClick={() => setActiveTab('configuracion')}
-              className={`px-3 py-1.5 rounded-md transition ${activeTab === 'configuracion' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-md transition cursor-pointer ${activeTab === 'configuracion' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
             >
               Horario Semanal Base
             </button>
             <button
               onClick={() => setActiveTab('metricas')}
-              className={`px-3 py-1.5 rounded-md transition ${activeTab === 'metricas' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-md transition cursor-pointer ${activeTab === 'metricas' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
             >
               Resumen de Horas
             </button>
             <button
               onClick={() => setActiveTab('choques')}
-              className={`px-3 py-1.5 rounded-md transition relative ${activeTab === 'choques' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
+              className={`px-3 py-1.5 rounded-md transition relative cursor-pointer ${activeTab === 'choques' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'}`}
             >
               Auditoría de Choques
               {cantidadChoquesTotales > 0 && (
@@ -638,7 +652,7 @@ export default function DocenteScheduleTool() {
           </div>
         </div>
 
-        {/* Estado Vacío si se limpian todas las asignaciones */}
+        {/* Estado Vacío */}
         {!currentAsig && (
           <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center space-y-3">
             <p className="text-base font-semibold text-slate-700">No hay asignaciones registradas</p>
@@ -647,7 +661,7 @@ export default function DocenteScheduleTool() {
             </p>
             <button
               onClick={agregarAsignacion}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm cursor-pointer"
             >
               + Crear Asignación
             </button>
@@ -663,7 +677,7 @@ export default function DocenteScheduleTool() {
                   Desglose de Sesiones: {currentAsig.materia}
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Rango programado: {currentAsig.fechaInicio} al {currentAsig.fechaFin}.
+                  Rango programado: {formatDateDDMMYYYY(currentAsig.fechaInicio)} al {formatDateDDMMYYYY(currentAsig.fechaFin)}.
                 </p>
               </div>
               <div className="flex gap-2 text-xs">
@@ -689,7 +703,7 @@ export default function DocenteScheduleTool() {
                     <th className="py-2.5 px-3">Fecha</th>
                     <th className="py-2.5 px-3">Día</th>
                     <th className="py-2.5 px-3">Horario Aplicado</th>
-                    <th className="py-2.5 px-3">Horas</th>
+                    <th className="py-2.5 px-3">N° Horas</th>
                     <th className="py-2.5 px-3">Estado / Observación</th>
                     <th className="py-2.5 px-3 text-right">Acción</th>
                   </tr>
@@ -708,7 +722,7 @@ export default function DocenteScheduleTool() {
 
                       return (
                         <tr key={s.id} className={filaBg}>
-                          <td className="py-2 px-3 font-semibold">{s.fecha}</td>
+                          <td className="py-2 px-3 font-semibold">{formatDateDDMMYYYY(s.fecha)}</td>
                           <td className="py-2 px-3">{s.nombreDia}</td>
                           <td className="py-2 px-3 font-mono">
                             {s.activa ? `${s.horaInicio} - ${s.horaFin}` : '—'}
@@ -748,7 +762,7 @@ export default function DocenteScheduleTool() {
                                   });
                                   setModalExcepcion(s);
                                 }}
-                                className="px-2.5 py-1 text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded text-xs font-medium"
+                                className="px-2.5 py-1 text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded text-xs font-medium cursor-pointer"
                               >
                                 {s.excepcion ? 'Editar Ajuste' : 'Cambiar Día'}
                               </button>
@@ -929,7 +943,7 @@ export default function DocenteScheduleTool() {
                 </div>
                 <button
                   onClick={descargarExcelResumen}
-                  className="self-start sm:self-auto px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  className="self-start sm:self-auto px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                 >
                   <span>📥</span> Descargar Tabla Excel
                 </button>
@@ -967,7 +981,7 @@ export default function DocenteScheduleTool() {
                             )}
                           </td>
                           <td className="py-3 px-3 text-slate-600">
-                            {item.fechaInicio} al {item.fechaFin}
+                            {formatDateDDMMYYYY(item.fechaInicio)} al {formatDateDDMMYYYY(item.fechaFin)}
                           </td>
                           <td className="py-3 px-3 text-center font-mono">
                             {item.totalSesiones} clases
@@ -1041,7 +1055,7 @@ export default function DocenteScheduleTool() {
                     <div className="divide-y divide-slate-100 text-xs max-h-[300px] overflow-y-auto">
                       {Object.entries(metricas.porSemana).map(([semana, horas]) => (
                         <div key={semana} className="py-2 flex justify-between items-center">
-                          <span className="text-slate-600">Semana del lunes {semana}</span>
+                          <span className="text-slate-600">Semana del {formatDateDDMMYYYY(semana)}</span>
                           <span className="font-semibold text-slate-900">{horas.toFixed(1)} h</span>
                         </div>
                       ))}
@@ -1083,7 +1097,7 @@ export default function DocenteScheduleTool() {
                     <div key={sesionId} className="p-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-900 flex justify-between items-center">
                       <div>
                         <span className="font-bold block text-sm">
-                          {sesion.fecha} ({sesion.nombreDia})
+                          {formatDateDDMMYYYY(sesion.fecha)} ({sesion.nombreDia})
                         </span>
                         <span className="text-red-700">
                           {sesion.materia} asignada de {sesion.horaInicio} a {sesion.horaFin}
@@ -1107,12 +1121,12 @@ export default function DocenteScheduleTool() {
 
       </div>
 
-      {/* Modal para Modificar Día Específico o Cancelar */}
+      {/* Modal para Ajustar Día Específico o Cancelar */}
       {modalExcepcion && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
             <h3 className="font-bold text-slate-900 text-base">
-              Ajuste para el {modalExcepcion.fecha} ({modalExcepcion.nombreDia})
+              Ajuste para el {formatDateDDMMYYYY(modalExcepcion.fecha)} ({modalExcepcion.nombreDia})
             </h3>
             <p className="text-xs text-slate-500">
               Modifica las horas de este día sin alterar las demás semanas, o márcalo como cancelado.
@@ -1159,7 +1173,7 @@ export default function DocenteScheduleTool() {
                 <label className="block text-slate-600 mb-1">Motivo / Justificación</label>
                 <input
                   type="text"
-                  placeholder="Ej. Clase extendida, reposición, etc."
+                  placeholder="Ej. Reposición, ajuste, etc."
                   value={excepForm.motivo}
                   onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
                   className="w-full border border-slate-300 rounded p-2"
@@ -1170,13 +1184,13 @@ export default function DocenteScheduleTool() {
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => setModalExcepcion(null)}
-                className="px-3 py-1.5 rounded text-xs text-slate-600 hover:bg-slate-100 font-medium"
+                className="px-3 py-1.5 rounded text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 onClick={guardarExcepcion}
-                className="px-4 py-1.5 rounded text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                className="px-4 py-1.5 rounded text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
               >
                 Aplicar Ajuste
               </button>
