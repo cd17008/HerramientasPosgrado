@@ -1,63 +1,59 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import XLSX from 'xlsx-js-style';
 
 // ==========================================
-// COMPONENTES DE ICONOS SVG ESTILIZADOS
+// 1. ICONOS SVG ESTILIZADOS
 // ==========================================
 const IconCalendar = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
   </svg>
 );
-
 const IconClock = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
-
 const IconPlus = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
   </svg>
 );
-
 const IconEdit = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
-
 const IconTrash = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-
 const IconDownload = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
   </svg>
 );
-
+const IconUpload = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12" />
+  </svg>
+);
 const IconAlert = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
 );
-
 const IconCheck = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
   </svg>
 );
-
 const IconLayers = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
   </svg>
 );
-
 const IconX = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -65,54 +61,25 @@ const IconX = ({ className = "w-4 h-4" }) => (
 );
 
 // ==========================================
-// CATÁLOGO DE ASUETOS Y VACACIONES UES (2026 - 2027)
+// 2. CONSTANTES INSTITUCIONALES (UES)
 // ==========================================
 const ASUETOS_BASE = {
   // 2026
   '2026-01-01': 'Año Nuevo',
-  '2026-03-30': 'Semana Santa (Lunes)',
-  '2026-03-31': 'Semana Santa (Martes)',
-  '2026-04-01': 'Semana Santa (Miércoles)',
-  '2026-04-02': 'Semana Santa (Jueves)',
-  '2026-04-03': 'Semana Santa (Viernes)',
-  '2026-04-04': 'Semana Santa (Sábado)',
-  '2026-04-05': 'Semana Santa (Domingo)',
-  '2026-05-01': 'Día del Trabajo',
-  '2026-05-10': 'Día de la Madre',
-  '2026-06-17': 'Día del Padre',
-  '2026-08-01': 'Vacaciones Agostinas UES',
-  '2026-08-02': 'Vacaciones Agostinas UES',
-  '2026-08-03': 'Vacaciones Agostinas UES',
-  '2026-08-04': 'Vacaciones Agostinas UES',
-  '2026-08-05': 'Vacaciones Agostinas UES',
-  '2026-08-06': 'Vacaciones Agostinas UES',
-  '2026-08-07': 'Vacaciones Agostinas UES',
-  '2026-09-15': 'Día de la Independencia',
-  '2026-11-02': 'Día de los Difuntos',
-  '2026-12-25': 'Navidad',
-
+  '2026-03-30': 'Semana Santa', '2026-03-31': 'Semana Santa', '2026-04-01': 'Semana Santa',
+  '2026-04-02': 'Semana Santa', '2026-04-03': 'Semana Santa', '2026-04-04': 'Semana Santa', '2026-04-05': 'Semana Santa',
+  '2026-05-01': 'Día del Trabajo', '2026-05-10': 'Día de la Madre', '2026-06-17': 'Día del Padre',
+  '2026-08-01': 'Vacaciones Agostinas', '2026-08-02': 'Vacaciones Agostinas', '2026-08-03': 'Vacaciones Agostinas',
+  '2026-08-04': 'Vacaciones Agostinas', '2026-08-05': 'Vacaciones Agostinas', '2026-08-06': 'Vacaciones Agostinas',
+  '2026-08-07': 'Vacaciones Agostinas', '2026-09-15': 'Independencia', '2026-11-02': 'Difuntos', '2026-12-25': 'Navidad',
   // 2027
   '2027-01-01': 'Año Nuevo',
-  '2027-03-22': 'Semana Santa (Lunes)',
-  '2027-03-23': 'Semana Santa (Martes)',
-  '2027-03-24': 'Semana Santa (Miércoles)',
-  '2027-03-25': 'Semana Santa (Jueves)',
-  '2027-03-26': 'Semana Santa (Viernes)',
-  '2027-03-27': 'Semana Santa (Sábado)',
-  '2027-03-28': 'Semana Santa (Domingo)',
-  '2027-05-01': 'Día del Trabajo',
-  '2027-05-10': 'Día de la Madre',
-  '2027-06-17': 'Día del Padre',
-  '2027-08-01': 'Vacaciones Agostinas UES',
-  '2027-08-02': 'Vacaciones Agostinas UES',
-  '2027-08-03': 'Vacaciones Agostinas UES',
-  '2027-08-04': 'Vacaciones Agostinas UES',
-  '2027-08-05': 'Vacaciones Agostinas UES',
-  '2027-08-06': 'Vacaciones Agostinas UES',
-  '2027-08-07': 'Vacaciones Agostinas UES',
-  '2027-09-15': 'Día de la Independencia',
-  '2027-11-02': 'Día de los Difuntos',
-  '2027-12-25': 'Navidad',
+  '2027-03-22': 'Semana Santa', '2027-03-23': 'Semana Santa', '2027-03-24': 'Semana Santa',
+  '2027-03-25': 'Semana Santa', '2027-03-26': 'Semana Santa', '2027-03-27': 'Semana Santa', '2027-03-28': 'Semana Santa',
+  '2027-05-01': 'Día del Trabajo', '2027-05-10': 'Día de la Madre', '2027-06-17': 'Día del Padre',
+  '2027-08-01': 'Vacaciones Agostinas', '2027-08-02': 'Vacaciones Agostinas', '2027-08-03': 'Vacaciones Agostinas',
+  '2027-08-04': 'Vacaciones Agostinas', '2027-08-05': 'Vacaciones Agostinas', '2027-08-06': 'Vacaciones Agostinas',
+  '2027-08-07': 'Vacaciones Agostinas', '2027-09-15': 'Independencia', '2027-11-02': 'Difuntos', '2027-12-25': 'Navidad'
 };
 
 const DIAS_SEMANA = [
@@ -125,8 +92,16 @@ const DIAS_SEMANA = [
   { id: 0, nombre: 'Domingo' }
 ];
 
+const MESES_ES = [
+  'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+];
+
+const FUNCION_COORDINADOR_DEFAULT = "Liderar la gestión estratégica y operativa de la maestría mediante la planificación, rendición de cuentas y coordinación de recursos logísticos.";
+const FUNCION_DOCENTE_DEFAULT = "Preparar clases, discusiones, impartir clases y discusiones, consulta y atención al estudiante, diseño y administración de exámenes y calificaciones.";
+
 // ==========================================
-// FUNCIONES DE FECHA Y HORA
+// 3. UTILIDADES DE FECHAS
 // ==========================================
 const timeToMinutes = (timeStr) => {
   if (!timeStr) return 0;
@@ -164,49 +139,651 @@ const getMondayIso = (dateStr) => {
   return formatDateIso(monday);
 };
 
+const parseDate = (dateInput) => {
+  if (!dateInput) return null;
+  if (dateInput instanceof Date) return dateInput;
+  if (typeof dateInput === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+      const [y, m, d] = dateInput.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateInput)) {
+      const [d, m, y] = dateInput.split('/').map(Number);
+      return new Date(y, m - 1, d);
+    }
+  }
+  const d = new Date(dateInput);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const formatearRangoFechasTexto = (fechaInicioInput, fechaFinInput) => {
+  const fIni = parseDate(fechaInicioInput);
+  const fFin = parseDate(fechaFinInput);
+  if (!fIni || !fFin) return '';
+
+  const dIni = fIni.getDate();
+  const mIni = MESES_ES[fIni.getMonth()];
+  const yIni = fIni.getFullYear();
+
+  const dFin = fFin.getDate();
+  const mFin = MESES_ES[fFin.getMonth()];
+  const yFin = fFin.getFullYear();
+
+  if (yIni === yFin) {
+    if (mIni === mFin) return `${dIni} AL ${dFin} DE ${mFin}`;
+    return `${dIni} DE ${mIni} AL ${dFin} DE ${mFin}`;
+  }
+  return `${dIni} DE ${mIni} DE ${yIni} AL ${dFin} DE ${mFin} DE ${yFin}`;
+};
+
+const calcularPeriodoGlobal = (programas) => {
+  let minDate = null;
+  let maxDate = null;
+
+  programas.forEach((prog) => {
+    (prog.asignaciones || []).forEach((asig) => {
+      const fIni = parseDate(asig.fechaInicio);
+      const fFin = parseDate(asig.fechaFin);
+      if (fIni && (!minDate || fIni < minDate)) minDate = fIni;
+      if (fFin && (!maxDate || fFin > maxDate)) maxDate = fFin;
+    });
+  });
+
+  return minDate && maxDate ? formatearRangoFechasTexto(minDate, maxDate) : '';
+};
+
+// ==========================================
+// 4. GENERADORES DE HOJAS EXCEL
+// ==========================================
+const borderThin = {
+  top: { style: 'thin', color: { rgb: '000000' } },
+  bottom: { style: 'thin', color: { rgb: '000000' } },
+  left: { style: 'thin', color: { rgb: '000000' } },
+  right: { style: 'thin', color: { rgb: '000000' } }
+};
+
+const STYLES = {
+  headerSection: {
+    fill: { fgColor: { rgb: 'D9E1F2' } },
+    font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: '000000' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: borderThin
+  },
+  headerSub: {
+    fill: { fgColor: { rgb: 'D9E1F2' } },
+    font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  label: {
+    font: { name: 'Calibri', sz: 10, bold: false, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  valueText: {
+    font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  valueWrapped: {
+    font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+    border: borderThin
+  },
+  valueEmail: {
+    font: { name: 'Calibri', sz: 10, color: { rgb: '0563C1' }, underline: true },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  resumenLabel: {
+    font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  resumenValue: {
+    font: { name: 'Calibri', sz: 10, color: { rgb: '000000' } },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    border: borderThin
+  },
+  resumenTotalLabel: {
+    font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '000000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: borderThin
+  },
+  resumenTotalValue: {
+    font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '000000' } },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    border: borderThin
+  }
+};
+
+function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
+  const worksheet = {};
+  const merges = [];
+  const rowsHeight = [];
+  let maxRow = 0;
+  let maxCol = 5;
+
+  function setCell(r, c, val, style) {
+    if (r > maxRow) maxRow = r;
+    if (c > maxCol) maxCol = c;
+    const cellRef = XLSX.utils.encode_cell({ r, c });
+    let cellType = 's';
+    if (typeof val === 'number') cellType = 'n';
+    else if (typeof val === 'boolean') cellType = 'b';
+    worksheet[cellRef] = {
+      t: cellType,
+      v: val !== undefined && val !== null ? val : '',
+      s: style || {}
+    };
+  }
+
+  worksheet['!cols'] = [
+    { wch: 4 },  // A
+    { wch: 32 }, // B
+    { wch: 65 }, // C
+    { wch: 4 },  // D
+    { wch: 34 }, // E
+    { wch: 16 }  // F
+  ];
+
+  // 1. TÍTULO GENERAL (CUADRO INFORMACIÓN DEL DOCENTE)
+  merges.push({ s: { r: 2, c: 1 }, e: { r: 2, c: 2 } });
+  setCell(2, 1, 'REQUERIMIENTO DE CONTRATACIÓN', STYLES.headerSection);
+  setCell(2, 2, '', STYLES.headerSection);
+
+  setCell(3, 1, 'ITEM', STYLES.headerSub);
+  setCell(3, 2, 'DETALLE', STYLES.headerSub);
+
+  const periodoGeneral = calcularPeriodoGlobal(programas);
+  const pagoHoraBase = Number(docenteInfo.pagoPorHora) || 0;
+
+  // Calificación docente y pago por hora van aquí centralizados
+  const esTiempoIntegral = docenteInfo.tipoContratacion === 'TIEMPO INTEGRAL';
+
+  const infoDocenteFilas = [
+    ['TIPO DE CONTRATO', docenteInfo.tipoContrato || 'SERVICIOS PROFESIONALES NO PERSONALES'],
+    ['TIPO DE CONTRATACION', docenteInfo.tipoContratacion || 'TIEMPO NORMAL'],
+    ['NOMBRE DEL CONTRATADO', (docenteInfo.nombreCompleto || '').toUpperCase()],
+    ['PROFESION', (docenteInfo.profesion || '').toUpperCase()],
+    ['NACIONALIDAD', (docenteInfo.nacionalidad || '').toUpperCase()],
+    ['CORREO ELECTRONICO', (docenteInfo.correo || '').toLowerCase()],
+    ['MODALIDAD DE SERVICIO', (docenteInfo.modalidadServicio || 'EN LINEA').toUpperCase()],
+    ['PERIODO', periodoGeneral]
+  ];
+
+  if (esTiempoIntegral) {
+    infoDocenteFilas.push(['SUELDO NOMINAL', Number(docenteInfo.sueldoNominal) || 0]);
+    infoDocenteFilas.push(['PORCENTAJE A PAGAR', `${Number(docenteInfo.porcentajePago) || 13}%`]);
+    infoDocenteFilas.push(['CANTIDAD DE MESES', Number(docenteInfo.cantidadMeses) || 1]);
+  } else {
+    infoDocenteFilas.push(['CALIFICACIÓN DOCENTE', (docenteInfo.calificacionDocente || 'F1').toUpperCase()]);
+    infoDocenteFilas.push(['PAGO POR HORA', pagoHoraBase]);
+  }
+
+  infoDocenteFilas.forEach((fila, i) => {
+    const r = 4 + i;
+    const esEmail = fila[0] === 'CORREO ELECTRONICO';
+    setCell(r, 1, fila[0], STYLES.label);
+    setCell(r, 2, fila[1], esEmail ? STYLES.valueEmail : STYLES.valueText);
+  });
+
+  // 2. RESUMEN DE PAGO (Col E y F)
+  merges.push({ s: { r: 2, c: 4 }, e: { r: 2, c: 5 } });
+  setCell(2, 4, 'RESUMEN DE PAGO', STYLES.headerSection);
+  setCell(2, 5, '', STYLES.headerSection);
+
+  let resumenRow = 3;
+  let totalMontoGeneral = 0;
+
+  programas.forEach((prog, pIdx) => {
+    const esDiplomado = prog.tipo === 'DIPLOMADO' || prog.nombre?.toUpperCase().includes('DIPLOMADO');
+    const factorProg = Number(prog.factorSobrecupo) || 1.0;
+
+    (prog.asignaciones || []).forEach((asig, aIdx) => {
+      const esCoordinador = asig.cargo?.toUpperCase().includes('COORDINAD');
+      let subtotal = 0;
+
+      if (esCoordinador) {
+        // Coordinación toma su propio valor por hora específico
+        const tarifaCoord = Number(asig.pagoPorHora) || pagoHoraBase;
+        subtotal = (Number(asig.cantidadHoras) || 0) * tarifaCoord;
+      } else if (esDiplomado) {
+        const valorHora = Math.round(pagoHoraBase * factorProg * 100) / 100;
+        subtotal = Math.round((Number(asig.cantidadHoras) || 0) * valorHora * 100) / 100;
+      } else if (esTiempoIntegral) {
+        // Fórmula Tiempo Integral: Sueldo * Porcentaje * Meses
+        const sueldo = Number(docenteInfo.sueldoNominal) || 0;
+        const porcentaje = (Number(docenteInfo.porcentajePago) || 13) / 100;
+        const meses = Number(docenteInfo.cantidadMeses) || 1;
+        subtotal = Math.round(sueldo * porcentaje * meses * 100) / 100;
+      } else {
+        subtotal = (Number(asig.cantidadHoras) || 0) * pagoHoraBase;
+      }
+
+      totalMontoGeneral += subtotal;
+      const labelResumen = `PROGRAMA ${pIdx + 1} - ASIGNACION ${aIdx + 1}`;
+      setCell(resumenRow, 4, labelResumen, STYLES.resumenLabel);
+      setCell(resumenRow, 5, subtotal, STYLES.resumenValue);
+      resumenRow++;
+    });
+  });
+
+  setCell(resumenRow, 4, 'TOTAL', STYLES.resumenTotalLabel);
+  setCell(resumenRow, 5, totalMontoGeneral, STYLES.resumenTotalValue);
+  const resumenEndRow = resumenRow;
+
+  // 3. PROGRAMAS Y ASIGNACIONES
+  let currentRow = Math.max(14, resumenEndRow + 1) + 2;
+
+  programas.forEach((prog, pIdx) => {
+    const esDiplomado = prog.tipo === 'DIPLOMADO' || prog.nombre?.toUpperCase().includes('DIPLOMADO');
+    const factorProg = Number(prog.factorSobrecupo) || 1.0;
+
+    merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow, c: 2 } });
+    setCell(currentRow, 1, `PROGRAMA ${pIdx + 1}`, STYLES.headerSection);
+    setCell(currentRow, 2, '', STYLES.headerSection);
+    currentRow++;
+
+    // Encabezado del Programa: alumnos y sobrecupo pertenecen al Programa
+    const filasPrograma = [
+      ['PROGRAMA', (prog.nombre || '').toUpperCase()],
+      ['SOLICITUD DE APROBACION', prog.solicitudAprobacion || ''],
+      ['ACUERDO DE APROBACIÓN', prog.acuerdoAprobacion || ''],
+      ['EDICIÓN/COHORTE', (prog.edicionCohorte || '').toUpperCase()],
+      ['COORDINADOR', (prog.coordinador || '').toUpperCase()]
+    ];
+
+    if (esDiplomado) {
+      filasPrograma.push(['CLASIFICACION DEL PROYECTO', prog.clasificacionProyecto || 'A']);
+    }
+    // Alumnos y Sobrecupo van a nivel de programa
+    filasPrograma.push(['ALUMNOS INSCRITOS', Number(prog.alumnosInscritos) || 0]);
+    if (esDiplomado) {
+      filasPrograma.push(['FACTOR DE SOBRECUPO', factorProg]);
+    }
+
+    filasPrograma.forEach(([lbl, val]) => {
+      setCell(currentRow, 1, lbl, STYLES.label);
+      setCell(currentRow, 2, val, STYLES.valueText);
+      currentRow++;
+    });
+
+    // Desglose de Asignaciones
+    (prog.asignaciones || []).forEach((asig, aIdx) => {
+      const esCoordinador = asig.cargo?.toUpperCase().includes('COORDINAD');
+
+      merges.push({ s: { r: currentRow, c: 1 }, e: { r: currentRow, c: 2 } });
+      setCell(currentRow, 1, `ASIGNACIÓN ${aIdx + 1}`, STYLES.headerSection);
+      setCell(currentRow, 2, '', STYLES.headerSection);
+      currentRow++;
+
+      const rangoPeriodo = asig.periodoTexto || formatearRangoFechasTexto(asig.fechaInicio, asig.fechaFin);
+
+      setCell(currentRow, 1, 'CARGO', STYLES.label);
+      setCell(currentRow, 2, (asig.cargo || '').toUpperCase(), STYLES.valueText);
+      currentRow++;
+
+      // Funciones según cargo
+      const funcionesTexto = esCoordinador
+        ? FUNCION_COORDINADOR_DEFAULT
+        : (asig.funciones || FUNCION_DOCENTE_DEFAULT);
+
+      rowsHeight[currentRow] = { hpt: 48 };
+      setCell(currentRow, 1, 'FUNCIONES', STYLES.label);
+      setCell(currentRow, 2, funcionesTexto, STYLES.valueWrapped);
+      currentRow++;
+
+      setCell(currentRow, 1, 'MODULO/CICLO', STYLES.label);
+      setCell(currentRow, 2, (asig.moduloCiclo || '').toUpperCase(), STYLES.valueText);
+      currentRow++;
+
+      // Si es coordinador, NO se incluye asignatura
+      if (!esCoordinador) {
+        setCell(currentRow, 1, 'ASIGNATURA', STYLES.label);
+        setCell(currentRow, 2, (asig.asignatura || '').toUpperCase(), STYLES.valueText);
+        currentRow++;
+      }
+
+      setCell(currentRow, 1, 'PERIODO', STYLES.label);
+      setCell(currentRow, 2, rangoPeriodo, STYLES.valueText);
+      currentRow++;
+
+      // En el Excel, calificación docente y pago por hora NO se repiten aquí
+      if (esDiplomado && !esCoordinador) {
+        const valorHora = Math.round(pagoHoraBase * factorProg * 100) / 100;
+        const subtotal = Math.round((Number(asig.cantidadHoras) || 0) * valorHora * 100) / 100;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'VALOR POR HORA', STYLES.label);
+        setCell(currentRow, 2, valorHora, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      } else if (esCoordinador) {
+        // Asignación de Coordinación: muestra tarifa específica y horas
+        const tarifaCoord = Number(asig.pagoPorHora) || pagoHoraBase;
+        const subtotal = (Number(asig.cantidadHoras) || 0) * tarifaCoord;
+
+        setCell(currentRow, 1, 'VALOR POR HORA', STYLES.label);
+        setCell(currentRow, 2, tarifaCoord, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      } else if (esTiempoIntegral) {
+        // Asignación Tiempo Integral
+        const sueldo = Number(docenteInfo.sueldoNominal) || 0;
+        const porcentaje = (Number(docenteInfo.porcentajePago) || 13) / 100;
+        const meses = Number(docenteInfo.cantidadMeses) || 1;
+        const subtotal = Math.round(sueldo * porcentaje * meses * 100) / 100;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      } else if (esCoordinador) {
+        // Asignación de Coordinación: muestra tarifa específica y horas
+        const tarifaCoord = Number(asig.pagoPorHora) || pagoHoraBase;
+        const subtotal = (Number(asig.cantidadHoras) || 0) * tarifaCoord;
+
+        setCell(currentRow, 1, 'VALOR POR HORA', STYLES.label);
+        setCell(currentRow, 2, tarifaCoord, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      } else if (esTiempoIntegral) {
+        // Asignación Tiempo Integral
+        const sueldo = Number(docenteInfo.sueldoNominal) || 0;
+        const porcentaje = (Number(docenteInfo.porcentajePago) || 13) / 100;
+        const meses = Number(docenteInfo.cantidadMeses) || 1;
+        const subtotal = Math.round(sueldo * porcentaje * meses * 100) / 100;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      } else {
+        // Maestría estándar
+        const subtotal = (Number(asig.cantidadHoras) || 0) * pagoHoraBase;
+
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS', STYLES.label);
+        setCell(currentRow, 2, Number(asig.cantidadHoras) || 0, STYLES.valueText);
+        currentRow++;
+
+        setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
+        setCell(currentRow, 2, subtotal, STYLES.valueText);
+        currentRow++;
+      }
+    });
+
+    currentRow++;
+  });
+
+  worksheet['!merges'] = merges;
+  worksheet['!rows'] = rowsHeight;
+  worksheet['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: maxRow, c: maxCol }
+  });
+
+  return worksheet;
+}
+
+function buildHorariosSheet({ asignaciones, sesiones }) {
+  const leftRows = [
+    ['Día', 'Fecha', 'N° Horas', 'Mes', 'Asignación']
+  ];
+
+  const sesionesEfectivas = sesiones
+    .filter((s) => s.activa)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  let sumaTotalHoras = 0;
+
+  sesionesEfectivas.forEach((s) => {
+    sumaTotalHoras += s.duracionHoras;
+    const [year, month, day] = s.fecha.split('-');
+    const numeroDia = parseInt(day, 10);
+    const fechaObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
+    const mesStr = fechaObj.toLocaleString('es-ES', { month: 'long' });
+    const mesLimpio = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
+
+    leftRows.push([s.nombreDia, numeroDia, s.duracionHoras, mesLimpio, s.materia]);
+  });
+
+  leftRows.push(['', 'TOTAL', sumaTotalHoras, 'horas', '']);
+
+  const rightRows = [];
+  const rightMeta = [];
+
+  asignaciones.forEach((asig, index) => {
+    if (index > 0) {
+      rightRows.push(['', '']);
+      rightMeta.push('empty');
+    }
+
+    rightRows.push([asig.materia, '']);
+    rightMeta.push('title');
+
+    rightRows.push(['Día', 'Horario']);
+    rightMeta.push('header');
+
+    const diasActivos = DIAS_SEMANA.filter((d) => asig.dias[d.id]?.activo);
+    if (diasActivos.length === 0) {
+      rightRows.push(['Sin horario semanal', 'No configurado']);
+      rightMeta.push('data');
+    } else {
+      diasActivos.forEach((d) => {
+        const c = asig.dias[d.id];
+        rightRows.push([d.nombre, `${formatTime12h(c.horaInicio)} a ${formatTime12h(c.horaFin)}`]);
+        rightMeta.push('data');
+      });
+    }
+
+    if (asig.excepciones && Object.keys(asig.excepciones).length > 0) {
+      Object.keys(asig.excepciones).sort().forEach((fStr) => {
+        const ex = asig.excepciones[fStr];
+        const [y, m, d] = fStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const nombreDia = DIAS_SEMANA.find((dia) => dia.id === dt.getDay())?.nombre.toLowerCase() || '';
+        const nombreMes = dt.toLocaleString('es-ES', { month: 'long' });
+        const etiqueta = `${nombreDia} ${dt.getDate()} de ${nombreMes}`;
+        const rango = ex.tipo === 'MODIFICAR'
+          ? `${formatTime12h(ex.horaInicio)} a ${formatTime12h(ex.horaFin)}`
+          : 'Clase cancelada';
+
+        rightRows.push([etiqueta, rango]);
+        rightMeta.push('data');
+      });
+    }
+  });
+
+  const totalFilas = Math.max(leftRows.length, rightRows.length);
+  const matrizFinal = [];
+
+  for (let i = 0; i < totalFilas; i++) {
+    const left = leftRows[i] || ['', '', '', '', ''];
+    const right = rightRows[i] || ['', ''];
+    matrizFinal.push([...left, '', ...right]);
+  }
+
+  const worksheet = XLSX.utils.aoa_to_sheet(matrizFinal);
+  const indiceTotal = leftRows.length - 1;
+
+  const EXCEL_STYLES = {
+    headerDark: {
+      fill: { fgColor: { rgb: '1E293B' } },
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: borderThin
+    },
+    headerNavy: {
+      fill: { fgColor: { rgb: '3730A3' } },
+      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      border: borderThin
+    },
+    headerLight: {
+      fill: { fgColor: { rgb: 'E2E8F0' } },
+      font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1E293B' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: borderThin
+    },
+    totalRow: (align = 'center') => ({
+      fill: { fgColor: { rgb: 'F1F5F9' } },
+      font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
+      alignment: { horizontal: align, vertical: 'center' },
+      border: {
+        top: { style: 'medium', color: { rgb: '94A3B8' } },
+        bottom: { style: 'medium', color: { rgb: '94A3B8' } },
+        left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+        right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+      }
+    }),
+    dataCell: (align = 'left') => ({
+      font: { name: 'Calibri', sz: 10 },
+      alignment: { horizontal: align, vertical: 'center' },
+      border: borderThin
+    })
+  };
+
+  for (let r = 0; r < leftRows.length; r++) {
+    for (let c = 0; c < 5; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+
+      if (r === 0) {
+        worksheet[cellRef].s = EXCEL_STYLES.headerDark;
+      } else if (r === indiceTotal) {
+        worksheet[cellRef].s = EXCEL_STYLES.totalRow(c === 1 || c === 2 || c === 3 ? 'center' : 'left');
+      } else {
+        worksheet[cellRef].s = EXCEL_STYLES.dataCell(c === 1 || c === 2 || c === 3 ? 'center' : 'left');
+      }
+    }
+  }
+
+  for (let r = 0; r < rightRows.length; r++) {
+    const tipo = rightMeta[r];
+    if (tipo === 'empty') continue;
+
+    for (let c = 6; c <= 7; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+
+      if (tipo === 'title') worksheet[cellRef].s = EXCEL_STYLES.headerNavy;
+      else if (tipo === 'header') worksheet[cellRef].s = EXCEL_STYLES.headerLight;
+      else worksheet[cellRef].s = EXCEL_STYLES.dataCell(c === 6 ? 'left' : 'center');
+    }
+  }
+
+  worksheet['!cols'] = [
+    { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 16 }, { wch: 38 },
+    { wch: 6 },
+    { wch: 28 }, { wch: 28 }
+  ];
+
+  return worksheet;
+}
+
+function generarExpedienteCompletoExcel({ docenteInfo, programas, asignacionesHorarios, sesionesHorarios }) {
+  const workbook = XLSX.utils.book_new();
+  const wsRequerimiento = buildRequerimientoSheet({ docenteInfo, programas });
+  XLSX.utils.book_append_sheet(workbook, wsRequerimiento, 'Requerimiento');
+
+  const wsHorarios = buildHorariosSheet({
+    asignaciones: asignacionesHorarios,
+    sesiones: sesionesHorarios
+  });
+  XLSX.utils.book_append_sheet(workbook, wsHorarios, 'Horarios');
+
+  const nombreSanitizado = (docenteInfo.nombreCompleto || 'Docente').replace(/[^a-zA-Z0-9_-]/g, '_');
+  XLSX.writeFile(workbook, `Requerimiento_${nombreSanitizado}.xlsx`);
+}
+
+// ==========================================
+// 5. COMPONENTE PRINCIPAL
+// ==========================================
 export default function DocenteScheduleTool() {
-  const [docenteNombre, setDocenteNombre] = useState('Ing. Manuel Rodríguez');
+  const [docenteNombre, setDocenteNombre] = useState('LEONARDO JAVIER MENDOZA BLANCO');
 
   const [asignaciones, setAsignaciones] = useState([
     {
       id: 'asig-1',
-      materia: 'Materia I - Arquitectura de Software',
-      fechaInicio: '2026-03-01',
-      fechaFin: '2026-06-30',
+      programaNombre: 'MAESTRÍA EN ENERGÍAS RENOVABLES Y MEDIO AMBIENTE',
+      programaTipo: 'MAESTRIA',
+      materia: 'CELDAS DE COMBUSTIBLE Y PILAS DE HIDROGENO',
+      cargo: 'DOCENTE DE MAESTRIA',
+      fechaInicio: '2026-10-19',
+      fechaFin: '2026-11-16',
       dias: {
-        2: { activo: true, horaInicio: '19:00', horaFin: '21:00' }, // Martes
-        4: { activo: true, horaInicio: '19:00', horaFin: '21:00' }  // Jueves
+        2: { activo: true, horaInicio: '18:00', horaFin: '21:00' },
+        4: { activo: true, horaInicio: '18:00', horaFin: '21:00' }
       },
-      excepciones: {
-        '2026-04-14': { tipo: 'MODIFICAR', horaInicio: '18:00', horaFin: '21:00', motivo: 'Recuperación de sesión' }
-      }
+      excepciones: {}
     },
     {
       id: 'asig-2',
-      materia: 'Materia II - Seguridad Informática',
-      fechaInicio: '2026-08-15',
-      fechaFin: '2026-11-30',
+      programaNombre: 'DIPLOMADO EN POWER BI',
+      programaTipo: 'DIPLOMADO',
+      materia: 'MODULO II',
+      cargo: 'DOCENTE DE DIPLOMADO',
+      fechaInicio: '2026-11-03',
+      fechaFin: '2026-12-12',
       dias: {
-        6: { activo: true, horaInicio: '08:00', horaFin: '12:00' } // Sábado
+        6: { activo: true, horaInicio: '08:00', horaFin: '12:00' }
       },
       excepciones: {}
     }
   ]);
 
-  const [activeTab, setActiveTab] = useState('calendario'); // 'calendario', 'metricas', 'choques'
+  const [activeTab, setActiveTab] = useState('calendario');
   const [asignacionSeleccionadaId, setAsignacionSeleccionadaId] = useState('asig-1');
-
-  // Asignaciones seleccionadas para el resumen y reporte
   const [seleccionadasResumen, setSeleccionadasResumen] = useState(['asig-1', 'asig-2']);
+  const [diasFiltro, setDiasFiltro] = useState([]);
 
-  // Modal para Crear / Editar Asignación
+  useEffect(() => {
+    if(currentAsig?.dias) {
+      const diasActivos = DIAS_SEMANA
+      .filter((d)=>currentAsig.dias[d.id]?.activo)
+      .map((d)=>d.id);
+      setDiasFiltro(diasActivos);
+    }
+  }, [asignacionSeleccionadaId]);
+
+  // Modales
   const [modalAsignacionAbierto, setModalAsignacionAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [formAsignacion, setFormAsignacion] = useState({
     id: '',
+    programaNombre: '',
+    programaTipo: 'MAESTRIA',
+    cargo: 'DOCENTE DE MAESTRIA',
     materia: '',
-    fechaInicio: '2026-03-01',
-    fechaFin: '2026-06-30',
+    fechaInicio: '2026-10-19',
+    fechaFin: '2026-11-16',
     dias: {
       1: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
       2: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
@@ -218,7 +795,6 @@ export default function DocenteScheduleTool() {
     }
   });
 
-  // Modal para Excepción Puntual por Día
   const [modalExcepcion, setModalExcepcion] = useState(null);
   const [excepForm, setExcepForm] = useState({
     fecha: '',
@@ -228,88 +804,14 @@ export default function DocenteScheduleTool() {
     motivo: ''
   });
 
-  // Limpiar todo el estado
-  const handleLimpiarTodo = () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar todas las asignaciones y limpiar el nombre del docente?')) {
-      setDocenteNombre('');
-      setAsignaciones([]);
-      setAsignacionSeleccionadaId(null);
-      setSeleccionadasResumen([]);
-    }
-  };
+  // Modal Requerimiento
+  const [modalRequerimientoAbierto, setModalRequerimientoAbierto] = useState(false);
+  const [requerimientoForm, setRequerimientoForm] = useState(null);
 
-  // Abrir modal de creación
-  const handleAbrirCrear = () => {
-    setModoEdicion(false);
-    setFormAsignacion({
-      id: `asig-${Date.now()}`,
-      materia: '',
-      fechaInicio: '2026-03-01',
-      fechaFin: '2026-06-30',
-      dias: {
-        1: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
-        2: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
-        3: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
-        4: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
-        5: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
-        6: { activo: false, horaInicio: '08:00', horaFin: '12:00' },
-        0: { activo: false, horaInicio: '08:00', horaFin: '12:00' }
-      }
-    });
-    setModalAsignacionAbierto(true);
-  };
+  // Referencia de archivo para importar JSON
+  const fileInputRef = useRef(null);
 
-  // Abrir modal de edición con los datos de la asignación seleccionada
-  const handleAbrirEditar = (asig) => {
-    setModoEdicion(true);
-    setFormAsignacion({
-      id: asig.id,
-      materia: asig.materia,
-      fechaInicio: asig.fechaInicio,
-      fechaFin: asig.fechaFin,
-      dias: JSON.parse(JSON.stringify(asig.dias))
-    });
-    setModalAsignacionAbierto(true);
-  };
-
-  // Guardar asignación (nueva o editada)
-  const handleGuardarAsignacion = (e) => {
-    e.preventDefault();
-    if (!formAsignacion.materia.trim()) {
-      alert('Por favor ingrese el nombre de la asignación.');
-      return;
-    }
-
-    if (modoEdicion) {
-      setAsignaciones((prev) =>
-        prev.map((a) => (a.id === formAsignacion.id ? { ...a, ...formAsignacion } : a))
-      );
-    } else {
-      const nueva = {
-        ...formAsignacion,
-        excepciones: {}
-      };
-      setAsignaciones((prev) => [...prev, nueva]);
-      setAsignacionSeleccionadaId(nueva.id);
-      setSeleccionadasResumen((prev) => [...prev, nueva.id]);
-    }
-
-    setModalAsignacionAbierto(false);
-  };
-
-  // Eliminar asignación individual
-  const handleEliminarAsignacion = (idAEliminar) => {
-    if (window.confirm('¿Deseas eliminar permanentemente esta asignación?')) {
-      const restantes = asignaciones.filter((a) => a.id !== idAEliminar);
-      setAsignaciones(restantes);
-      setSeleccionadasResumen((prev) => prev.filter((id) => id !== idAEliminar));
-      if (asignacionSeleccionadaId === idAEliminar) {
-        setAsignacionSeleccionadaId(restantes.length > 0 ? restantes[0].id : null);
-      }
-    }
-  };
-
-  // Generador de sesiones de clase
+  // Cómputo de Sesiones
   const todasLasSesiones = useMemo(() => {
     const sesiones = [];
 
@@ -359,6 +861,7 @@ export default function DocenteScheduleTool() {
         sesiones.push({
           id: `${asig.id}_${fechaStr}`,
           asignacionId: asig.id,
+          programaNombre: asig.programaNombre,
           materia: asig.materia,
           fecha: fechaStr,
           diaSemanaId: dayOfWeek,
@@ -380,7 +883,7 @@ export default function DocenteScheduleTool() {
     return sesiones;
   }, [asignaciones]);
 
-  // Auditoría de choques
+  // Auditoría de Choques
   const mapaDeChoques = useMemo(() => {
     const choques = {};
     const porFecha = {};
@@ -419,13 +922,16 @@ export default function DocenteScheduleTool() {
     return choques;
   }, [todasLasSesiones]);
 
-  // Resumen consolidado de horas por asignación
+  // Resumen de Asignaciones
   const resumenPorAsignacion = useMemo(() => {
     return asignaciones.map((asig) => {
       const sesionesAsig = todasLasSesiones.filter((s) => s.activa && s.asignacionId === asig.id);
       const totalHoras = sesionesAsig.reduce((acc, curr) => acc + curr.duracionHoras, 0);
       return {
         id: asig.id,
+        programaNombre: asig.programaNombre,
+        programaTipo: asig.programaTipo,
+        cargo: asig.cargo,
         materia: asig.materia,
         fechaInicio: asig.fechaInicio,
         fechaFin: asig.fechaFin,
@@ -435,15 +941,13 @@ export default function DocenteScheduleTool() {
     });
   }, [asignaciones, todasLasSesiones]);
 
-  // Total de horas y sesiones de las asignaciones seleccionadas con checkbox
   const totalesSeleccionados = useMemo(() => {
-    const asignacionesFiltradas = resumenPorAsignacion.filter((a) => seleccionadasResumen.includes(a.id));
-    const totalHoras = asignacionesFiltradas.reduce((acc, curr) => acc + curr.totalHoras, 0);
-    const totalSesiones = asignacionesFiltradas.reduce((acc, curr) => acc + curr.totalSesiones, 0);
+    const filtradas = resumenPorAsignacion.filter((a) => seleccionadasResumen.includes(a.id));
+    const totalHoras = filtradas.reduce((acc, curr) => acc + curr.totalHoras, 0);
+    const totalSesiones = filtradas.reduce((acc, curr) => acc + curr.totalSesiones, 0);
     return { totalHoras, totalSesiones };
   }, [resumenPorAsignacion, seleccionadasResumen]);
 
-  // Métricas mensuales y semanales de la asignación actualmente seleccionada
   const metricasAsigActiva = useMemo(() => {
     let totalHoras = 0;
     let totalSesiones = 0;
@@ -455,7 +959,6 @@ export default function DocenteScheduleTool() {
       .forEach((s) => {
         totalHoras += s.duracionHoras;
         totalSesiones += 1;
-
         const mesKey = s.fecha.substring(0, 7);
         porMes[mesKey] = (porMes[mesKey] || 0) + s.duracionHoras;
 
@@ -466,242 +969,230 @@ export default function DocenteScheduleTool() {
     return { totalHoras, totalSesiones, porMes, porSemana };
   }, [todasLasSesiones, asignacionSeleccionadaId]);
 
-  // Manejo de Checkboxes de Resumen
-  const handleToggleSeleccionTodas = () => {
-    if (seleccionadasResumen.length === asignaciones.length) {
+  // Manejadores de Estado y Modales
+  const handleLimpiarTodo = () => {
+    if (window.confirm('¿Deseas eliminar todas las asignaciones y limpiar los datos?')) {
+      setDocenteNombre('');
+      setAsignaciones([]);
+      setAsignacionSeleccionadaId(null);
       setSeleccionadasResumen([]);
-    } else {
-      setSeleccionadasResumen(asignaciones.map((a) => a.id));
     }
   };
 
-  const handleToggleSeleccionAsig = (id) => {
-    setSeleccionadasResumen((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const handleAbrirCrear = () => {
+    setModoEdicion(false);
+    setFormAsignacion({
+      id: `asig-${Date.now()}`,
+      programaNombre: asignaciones[0]?.programaNombre || '',
+      programaTipo: asignaciones[0]?.programaTipo || 'MAESTRIA',
+      cargo: 'DOCENTE DE MAESTRIA',
+      materia: '',
+      fechaInicio: '2026-10-19',
+      fechaFin: '2026-11-16',
+      dias: {
+        1: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
+        2: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
+        3: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
+        4: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
+        5: { activo: false, horaInicio: '18:00', horaFin: '20:00' },
+        6: { activo: false, horaInicio: '08:00', horaFin: '12:00' },
+        0: { activo: false, horaInicio: '08:00', horaFin: '12:00' }
+      }
+    });
+    setModalAsignacionAbierto(true);
   };
 
-  // Exportación a Excel con asignaciones filtradas y ajustes manuales desglosados
-  const descargarExcelResumen = () => {
-    const asignacionesFiltradas = asignaciones.filter((a) => seleccionadasResumen.includes(a.id));
+  const handleAbrirEditar = (asig) => {
+    setModoEdicion(true);
+    setFormAsignacion({
+      id: asig.id,
+      programaNombre: asig.programaNombre || '',
+      programaTipo: asig.programaTipo || 'MAESTRIA',
+      cargo: asig.cargo || 'DOCENTE DE MAESTRIA',
+      materia: asig.materia,
+      fechaInicio: asig.fechaInicio,
+      fechaFin: asig.fechaFin,
+      dias: JSON.parse(JSON.stringify(asig.dias))
+    });
+    setModalAsignacionAbierto(true);
+  };
 
-    if (asignacionesFiltradas.length === 0) {
-      alert('Por favor seleccione al menos una asignación mediante los checkboxes para exportar.');
+  const handleGuardarAsignacion = (e) => {
+    e.preventDefault();
+    const esCoord = formAsignacion.cargo?.toUpperCase().includes('COORDINAD');
+    if (!formAsignacion.programaNombre.trim() || (!esCoord && !formAsignacion.materia.trim())) {
+      alert('Por favor completa los campos requeridos de la asignación.');
       return;
     }
 
-    // 1. Tabla Izquierda: Detalle de Sesiones
-    const leftRows = [
-      ['Día', 'Fecha', 'N° Horas', 'Mes', 'Asignación']
-    ];
+    const payload = {
+      ...formAsignacion,
+      materia: esCoord ? `Coordinación Académica - ${formAsignacion.programaNombre}` : formAsignacion.materia
+    };
 
-    const sesionesEfectivas = todasLasSesiones
-      .filter((s) => s.activa && seleccionadasResumen.includes(s.asignacionId))
-      .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    if (modoEdicion) {
+      setAsignaciones((prev) => prev.map((a) => (a.id === payload.id ? { ...a, ...payload } : a)));
+    } else {
+      const nueva = { ...payload, excepciones: {} };
+      setAsignaciones((prev) => [...prev, nueva]);
+      setAsignacionSeleccionadaId(nueva.id);
+      setSeleccionadasResumen((prev) => [...prev, nueva.id]);
+    }
+    setModalAsignacionAbierto(false);
+  };
 
-    let sumaTotalHorasDetalle = 0;
-
-    sesionesEfectivas.forEach((s) => {
-      sumaTotalHorasDetalle += s.duracionHoras;
-
-      const [year, month, day] = s.fecha.split('-');
-      const numeroDia = parseInt(day, 10); // Únicamente número de día
-
-      const fechaObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
-      const mesStr = fechaObj.toLocaleString('es-ES', { month: 'long' });
-      const mesLimpio = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
-
-      leftRows.push([
-        s.nombreDia,
-        numeroDia,
-        s.duracionHoras,
-        mesLimpio,
-        s.materia
-      ]);
-    });
-
-    // Fila final de TOTAL requerida
-    leftRows.push([
-      '',
-      'TOTAL',
-      sumaTotalHorasDetalle,
-      'horas',
-      ''
-    ]);
-
-    // 2. Tabla Derecha: Horarios Semanales y Ajustes Manuales por Fecha
-    const rightRows = [];
-    const rightMeta = [];
-
-    asignacionesFiltradas.forEach((asig, index) => {
-      if (index > 0) {
-        rightRows.push(['', '']);
-        rightMeta.push('empty');
+  const handleEliminarAsignacion = (idAEliminar) => {
+    if (window.confirm('¿Deseas eliminar permanentemente esta asignación?')) {
+      const restantes = asignaciones.filter((a) => a.id !== idAEliminar);
+      setAsignaciones(restantes);
+      setSeleccionadasResumen((prev) => prev.filter((id) => id !== idAEliminar));
+      if (asignacionSeleccionadaId === idAEliminar) {
+        setAsignacionSeleccionadaId(restantes.length > 0 ? restantes[0].id : null);
       }
+    }
+  };
 
-      // Nombre de la Asignación encima de su horario
-      rightRows.push([asig.materia, '']);
-      rightMeta.push('title');
+  // Respaldo JSON (Exportar / Importar)
+  const descargarRespaldoJSON = (datosPersonalizados = null) => {
+    const payload = datosPersonalizados || {
+      docenteNombre,
+      asignaciones,
+      seleccionadasResumen,
+      fechaExportacion: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const sanitized = (docenteNombre || 'Docente').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.href = url;
+    link.download = `Respaldo_Horarios_${sanitized}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
-      // Encabezado
-      rightRows.push(['Día', 'Horario']);
-      rightMeta.push('header');
+  const handleCargarRespaldoJSON = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      // Horario semanal recurrente
-      const diasActivos = DIAS_SEMANA.filter((d) => asig.dias[d.id]?.activo);
-      if (diasActivos.length === 0) {
-        rightRows.push(['Sin horario semanal', 'No configurado']);
-        rightMeta.push('data');
-      } else {
-        diasActivos.forEach((d) => {
-          const c = asig.dias[d.id];
-          const rangoFormateado = `${formatTime12h(c.horaInicio)} a ${formatTime12h(c.horaFin)}`;
-          rightRows.push([d.nombre, rangoFormateado]);
-          rightMeta.push('data');
-        });
-      }
-
-      // Ajustes manuales por fecha puntual (excepciones)
-      if (asig.excepciones && Object.keys(asig.excepciones).length > 0) {
-        const fechasExcepcion = Object.keys(asig.excepciones).sort();
-
-        fechasExcepcion.forEach((fStr) => {
-          const ex = asig.excepciones[fStr];
-          const [y, m, d] = fStr.split('-').map(Number);
-          const dt = new Date(y, m - 1, d);
-          const nombreDia = DIAS_SEMANA.find((dia) => dia.id === dt.getDay())?.nombre.toLowerCase() || '';
-          const nombreMes = dt.toLocaleString('es-ES', { month: 'long' });
-
-          const etiquetaFecha = `${nombreDia} ${dt.getDate()} de ${nombreMes}`;
-          let rangoAjuste = '';
-
-          if (ex.tipo === 'MODIFICAR') {
-            rangoAjuste = `${formatTime12h(ex.horaInicio)} a ${formatTime12h(ex.horaFin)}`;
-          } else if (ex.tipo === 'CANCELAR') {
-            rangoAjuste = 'Clase cancelada';
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const datos = JSON.parse(event.target.result);
+        if (datos.docenteNombre !== undefined) setDocenteNombre(datos.docenteNombre);
+        if (Array.isArray(datos.asignaciones)) {
+          setAsignaciones(datos.asignaciones);
+          if (datos.asignaciones.length > 0) {
+            setAsignacionSeleccionadaId(datos.asignaciones[0].id);
+            setSeleccionadasResumen(datos.seleccionadasResumen || datos.asignaciones.map((a) => a.id));
+          } else {
+            setAsignacionSeleccionadaId(null);
+            setSeleccionadasResumen([]);
           }
-
-          rightRows.push([etiquetaFecha, rangoAjuste]);
-          rightMeta.push('data-exception');
-        });
-      }
-    });
-
-    // 3. Fusión en matriz 2D
-    const totalFilas = Math.max(leftRows.length, rightRows.length);
-    const matrizFinal = [];
-
-    for (let i = 0; i < totalFilas; i++) {
-      const left = leftRows[i] || ['', '', '', '', ''];
-      const columnaVacia = '';
-      const right = rightRows[i] || ['', ''];
-
-      matrizFinal.push([...left, columnaVacia, ...right]);
-    }
-
-    const worksheet = XLSX.utils.aoa_to_sheet(matrizFinal);
-
-    // 4. Estilos sobrios y bordes de celda
-    const borderStyle = {
-      top: { style: 'thin', color: { rgb: 'CBD5E1' } },
-      bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-      left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-      right: { style: 'thin', color: { rgb: 'CBD5E1' } }
-    };
-
-    const headerLeftStyle = {
-      fill: { fgColor: { rgb: '1E293B' } },
-      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: borderStyle
-    };
-
-    const totalRowStyle = (align = 'center') => ({
-      fill: { fgColor: { rgb: 'F1F5F9' } },
-      font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '0F172A' } },
-      alignment: { horizontal: align, vertical: 'center' },
-      border: {
-        top: { style: 'medium', color: { rgb: '94A3B8' } },
-        bottom: { style: 'medium', color: { rgb: '94A3B8' } },
-        left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-        right: { style: 'thin', color: { rgb: 'CBD5E1' } }
-      }
-    });
-
-    const titleRightStyle = {
-      fill: { fgColor: { rgb: '334155' } },
-      font: { name: 'Calibri', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
-      alignment: { horizontal: 'left', vertical: 'center' },
-      border: borderStyle
-    };
-
-    const headerRightStyle = {
-      fill: { fgColor: { rgb: 'E2E8F0' } },
-      font: { name: 'Calibri', sz: 10, bold: true, color: { rgb: '1E293B' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: borderStyle
-    };
-
-    const dataCellStyle = (align = 'left') => ({
-      font: { name: 'Calibri', sz: 10 },
-      alignment: { horizontal: align, vertical: 'center' },
-      border: borderStyle
-    });
-
-    // 5. Asignar estilos por celda
-    const indiceFilaTotal = leftRows.length - 1;
-
-    for (let r = 0; r < leftRows.length; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cellRef = XLSX.utils.encode_cell({ r, c });
-        if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-
-        if (r === 0) {
-          worksheet[cellRef].s = headerLeftStyle;
-        } else if (r === indiceFilaTotal) {
-          const align = c === 1 || c === 2 || c === 3 ? 'center' : 'left';
-          worksheet[cellRef].s = totalRowStyle(align);
-        } else {
-          const align = c === 1 || c === 2 || c === 3 ? 'center' : 'left';
-          worksheet[cellRef].s = dataCellStyle(align);
         }
+        alert('¡Respaldo JSON cargado exitosamente!');
+      } catch (err) {
+        alert('El archivo no es un JSON válido.');
       }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+
+  // Apertura del Modal de Requerimiento
+  const handleAbrirModalRequerimiento = () => {
+    const filtradas = asignaciones.filter((a) => seleccionadasResumen.includes(a.id));
+    if (filtradas.length === 0) {
+      alert('Por favor selecciona al menos una asignación mediante los checkboxes.');
+      return;
     }
 
-    for (let r = 0; r < rightRows.length; r++) {
-      const tipoFila = rightMeta[r];
-      if (tipoFila === 'empty') continue;
+    const mapaProgramas = {};
 
-      for (let c = 6; c <= 7; c++) {
-        const cellRef = XLSX.utils.encode_cell({ r, c });
-        if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+    filtradas.forEach((asig) => {
+      const pNombre = asig.programaNombre || 'Programa Sin Nombre';
+      const esDip = asig.programaTipo === 'DIPLOMADO';
+      const esCoord = asig.cargo?.toUpperCase().includes('COORDINAD');
 
-        if (tipoFila === 'title') {
-          worksheet[cellRef].s = titleRightStyle;
-        } else if (tipoFila === 'header') {
-          worksheet[cellRef].s = headerRightStyle;
-        } else {
-          worksheet[cellRef].s = dataCellStyle(c === 6 ? 'left' : 'center');
-        }
+      if (!mapaProgramas[pNombre]) {
+        mapaProgramas[pNombre] = {
+          nombre: pNombre,
+          tipo: asig.programaTipo || 'MAESTRIA',
+          solicitudAprobacion: '',
+          acuerdoAprobacion: '',
+          edicionCohorte: esDip ? 'EDICION II 2026' : '7° COHORTE',
+          coordinador: esDip ? 'MSC. VIRGILIO REYES' : 'MSC. JORGE ALBERTO ZETINO CHICAS',
+          clasificacionProyecto: 'A',
+          // Alumnos y factor se controlan ahora a nivel de programa
+          alumnosInscritos: esDip ? 46 : 10,
+          factorSobrecupo: 1.25,
+          asignaciones: []
+        };
       }
-    }
 
-    worksheet['!cols'] = [
-      { wch: 14 }, // A: Día
-      { wch: 10 }, // B: Fecha (Número de día)
-      { wch: 14 }, // C: N° Horas
-      { wch: 16 }, // D: Mes
-      { wch: 38 }, // E: Asignación
-      { wch: 6 },  // F: Vacía
-      { wch: 28 }, // G: Día / Ajuste de fecha
-      { wch: 28 }  // H: Horario
-    ];
+      const resumen = resumenPorAsignacion.find((r) => r.id === asig.id);
+      const horasCalculadas = resumen ? resumen.totalHoras : 0;
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Asignaciones y Horarios');
+      mapaProgramas[pNombre].asignaciones.push({
+        asigId: asig.id,
+        asignatura: asig.materia,
+        fechaInicio: asig.fechaInicio,
+        fechaFin: asig.fechaFin,
+        cargo: asig.cargo || (esDip ? 'DOCENTE DE DIPLOMADO' : 'DOCENTE DE MAESTRIA'),
+        funciones: esCoord ? FUNCION_COORDINADOR_DEFAULT : FUNCION_DOCENTE_DEFAULT,
+        moduloCiclo: 'CICLO II',
+        cantidadHoras: horasCalculadas,
+        pagoPorHora: esCoord ? (asig.pagoPorHora || 25.0) : '' // Tarifa propia para coordinación
+      });
+    });
 
-    const sanitizedDocente = docenteNombre.trim() ? docenteNombre.replace(/[^a-zA-Z0-9_-]/g, '_') : 'Docente';
-    XLSX.writeFile(workbook, `Horarios_${sanitizedDocente}.xlsx`);
+    setRequerimientoForm({
+      docenteInfo: {
+        nombreCompleto: docenteNombre,
+        tipoContrato: 'SERVICIOS PROFESIONALES NO PERSONALES',
+        tipoContratacion: 'TIEMPO NORMAL',
+        profesion: 'DOCTOR',
+        nacionalidad: 'NICARAGUENSE',
+        correo: 'leonardo.mendoza@ues.edu.sv',
+        modalidadServicio: 'EN LINEA',
+        // Calificación docente y pago por hora van centralizados aquí
+        calificacionDocente: 'F6',
+        pagoPorHora: 22.50,
+        sueldoNominal: 1200.00,
+        porcentajePago: 13,
+        cantidadMeses: 1
+      },
+      programas: Object.values(mapaProgramas)
+    });
+
+    setModalRequerimientoAbierto(true);
+  };
+
+  const handleConfirmarDescargaExcel = (e) => {
+    e.preventDefault();
+    if (!requerimientoForm) return;
+
+    const asignacionesFiltradas = asignaciones.filter((a) => seleccionadasResumen.includes(a.id));
+    const sesionesFiltradas = todasLasSesiones.filter((s) => seleccionadasResumen.includes(s.asignacionId));
+
+    generarExpedienteCompletoExcel({
+      docenteInfo: requerimientoForm.docenteInfo,
+      programas: requerimientoForm.programas,
+      asignacionesHorarios: asignacionesFiltradas,
+      sesionesHorarios: sesionesFiltradas
+    });
+
+    descargarRespaldoJSON({
+      docenteNombre,
+      docenteInfo: requerimientoForm.docenteInfo,
+      programas: requerimientoForm.programas,
+      asignaciones,
+      seleccionadasResumen,
+      fechaExportacion: new Date().toISOString()
+    });
+
+    setModalRequerimientoAbierto(false);
   };
 
   const guardarExcepcion = () => {
@@ -725,7 +1216,6 @@ export default function DocenteScheduleTool() {
         return { ...asig, excepciones: nuevasExcepciones };
       })
     );
-
     setModalExcepcion(null);
   };
 
@@ -734,8 +1224,16 @@ export default function DocenteScheduleTool() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex flex-col">
-      
-      {/* BARRA SUPERIOR SOBRIA */}
+      {/* Input oculto para cargar respaldo JSON */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleCargarRespaldoJSON}
+        accept=".json,application/json"
+        className="hidden"
+      />
+
+      {/* ENCABEZADO */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -751,12 +1249,21 @@ export default function DocenteScheduleTool() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold cursor-pointer transition-colors"
+            title="Importar un archivo JSON previamente descargado"
+          >
+            <IconUpload className="w-3.5 h-3.5 text-slate-500" />
+            Cargar Respaldo
+          </button>
+
           <button
             type="button"
             onClick={handleLimpiarTodo}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold cursor-pointer transition-colors"
-            title="Borrar todas las asignaciones y limpiar el formulario"
           >
             <IconTrash className="w-3.5 h-3.5 text-slate-500" />
             Limpiar Todo
@@ -789,22 +1296,20 @@ export default function DocenteScheduleTool() {
         </div>
       </header>
 
-      {/* CONTENEDOR PRINCIPAL: SIDEBAR + PANEL DE TRABAJO */}
+      {/* CONTENEDOR PRINCIPAL */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        {/* BARRA LATERAL IZQUIERDA: ASIGNACIONES */}
+        {/* Barra Lateral Izquierda */}
         <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-4 space-y-4 flex-shrink-0">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
             <div className="flex items-center gap-1.5 text-slate-800">
               <IconLayers className="w-4 h-4 text-slate-600" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Asignaciones</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider">Programas y Asignaciones</h2>
             </div>
             <span className="text-xs text-slate-500 font-mono">
               {asignaciones.length} total
             </span>
           </div>
 
-          {/* Botón para abrir modal de agregar */}
           <button
             type="button"
             onClick={handleAbrirCrear}
@@ -814,7 +1319,6 @@ export default function DocenteScheduleTool() {
             Nueva Asignación
           </button>
 
-          {/* Lista de asignaciones creadas */}
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {asignaciones.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-8 italic">
@@ -824,6 +1328,7 @@ export default function DocenteScheduleTool() {
               asignaciones.map((asig) => {
                 const esActiva = asig.id === asignacionSeleccionadaId;
                 const diasActivos = DIAS_SEMANA.filter((d) => asig.dias[d.id]?.activo);
+                const esCoord = asig.cargo?.toUpperCase().includes('COORDINAD');
 
                 return (
                   <div
@@ -835,13 +1340,25 @@ export default function DocenteScheduleTool() {
                         : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-1">
-                      <span className="font-bold text-xs leading-snug line-clamp-2">
-                        {asig.materia}
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700">
+                        {asig.programaTipo || 'PROGRAMA'}
                       </span>
+                      {esCoord && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase bg-indigo-100 text-indigo-800">
+                          COORDINACIÓN
+                        </span>
+                      )}
                     </div>
 
-                    <div className="mt-1 text-[11px] text-slate-500 flex items-center gap-1">
+                    <p className="text-[11px] font-medium text-slate-500 truncate" title={asig.programaNombre}>
+                      {asig.programaNombre}
+                    </p>
+                    <span className="font-bold text-xs leading-snug line-clamp-2 mt-0.5">
+                      {asig.materia}
+                    </span>
+
+                    <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
                       <IconCalendar className="w-3 h-3 text-slate-400" />
                       <span>{formatDateDDMMYYYY(asig.fechaInicio)} al {formatDateDDMMYYYY(asig.fechaFin)}</span>
                     </div>
@@ -851,11 +1368,10 @@ export default function DocenteScheduleTool() {
                       <span>
                         {diasActivos.length > 0
                           ? diasActivos.map((d) => d.nombre.slice(0, 3)).join(', ')
-                          : 'Sin días asignados'}
+                          : 'Sin horario semanal'}
                       </span>
                     </div>
 
-                    {/* Botones de acción desplegados debajo de la asignación seleccionada */}
                     {esActiva && (
                       <div className="mt-3 pt-2 border-t border-slate-200 flex items-center justify-end gap-2">
                         <button
@@ -889,10 +1405,8 @@ export default function DocenteScheduleTool() {
           </div>
         </aside>
 
-        {/* PANEL PRINCIPAL */}
+        {/* Panel Central */}
         <main className="flex-1 p-6 overflow-y-auto space-y-5">
-          
-          {/* PESTAÑAS PRINCIPALES */}
           <div className="flex border-b border-slate-200">
             <button
               type="button"
@@ -934,13 +1448,9 @@ export default function DocenteScheduleTool() {
             </button>
           </div>
 
-          {/* ESTADO VACÍO SI NO HAY ASIGNACIÓN SELECCIONADA */}
           {!currentAsig && (
             <div className="bg-white border border-dashed border-slate-300 rounded p-12 text-center space-y-3">
               <p className="text-sm font-semibold text-slate-700">No hay materias asignadas</p>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Crea una nueva asignación desde la barra lateral izquierda para comenzar a proyectar el calendario de clases.
-              </p>
               <button
                 type="button"
                 onClick={handleAbrirCrear}
@@ -951,12 +1461,15 @@ export default function DocenteScheduleTool() {
             </div>
           )}
 
-          {/* TAB 1: FECHAS Y SESIONES */}
+          {/* TAB 1: Fechas y Sesiones */}
           {currentAsig && activeTab === 'calendario' && (
             <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                    {currentAsig.programaTipo}: {currentAsig.programaNombre}
+                  </span>
+                  <h3 className="text-base font-bold text-slate-900 mt-1">
                     {currentAsig.materia}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -979,6 +1492,69 @@ export default function DocenteScheduleTool() {
                 </div>
               </div>
 
+              {/* Barra de Filtro por Días de la Semana */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-slate-700 mr-1">Filtrar días:</span>
+                  {DIAS_SEMANA.map((dia) => {
+                    const tieneAsignacion = Boolean(currentAsig?.dias?.[dia.id]?.activo);
+                    const estaSeleccionado = diasFiltro.includes(dia.id);
+
+                    return (
+                      <button
+                        key={dia.id}
+                        type="button"
+                        onClick={() => {
+                          setDiasFiltro((prev) =>
+                            prev.includes(dia.id)
+                              ? prev.filter((id) => id !== dia.id)
+                              : [...prev, dia.id]
+                          );
+                        }}
+                        className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${
+                          estaSeleccionado
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{dia.nombre}</span>
+                        {tieneAsignacion && (
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
+                            }`}
+                            title="Tiene horario asignado"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setDiasFiltro(DIAS_SEMANA.map((d) => d.id))}
+                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                  >
+                    Ver todos
+                  </button>
+                  <span className="text-slate-300">|</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const activos = DIAS_SEMANA
+                        .filter((d) => currentAsig?.dias?.[d.id]?.activo)
+                        .map((d) => d.id);
+                      setDiasFiltro(activos);
+                    }}
+                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                  >
+                    Días con asignación
+                  </button>
+                </div>
+              </div>
+
               <div className="overflow-x-auto border border-slate-200 rounded max-h-[500px]">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-slate-50 sticky top-0 z-10 text-slate-700 uppercase font-semibold border-b border-slate-200">
@@ -993,10 +1569,9 @@ export default function DocenteScheduleTool() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {todasLasSesiones
-                      .filter((s) => s.asignacionId === currentAsig.id)
+                      .filter((s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId))
                       .map((s) => {
                         const conflicto = mapaDeChoques[s.id];
-
                         let filaBg = 'hover:bg-slate-50';
                         if (s.esAsueto) filaBg = 'bg-blue-50/40 hover:bg-blue-50';
                         else if (s.estado === 'MODIFICADO') filaBg = 'bg-amber-50/50 hover:bg-amber-50';
@@ -1005,9 +1580,7 @@ export default function DocenteScheduleTool() {
 
                         return (
                           <tr key={s.id} className={filaBg}>
-                            <td className="py-2 px-3 font-semibold text-slate-900">
-                              {formatDateDDMMYYYY(s.fecha)}
-                            </td>
+                            <td className="py-2 px-3 font-semibold text-slate-900">{formatDateDDMMYYYY(s.fecha)}</td>
                             <td className="py-2 px-3 text-slate-600">{s.nombreDia}</td>
                             <td className="py-2 px-3 font-mono text-slate-800">
                               {s.activa ? `${formatTime12h(s.horaInicio)} a ${formatTime12h(s.horaFin)}` : '—'}
@@ -1058,17 +1631,24 @@ export default function DocenteScheduleTool() {
                           </tr>
                         );
                       })}
+                      {todasLasSesiones.filter(
+                      (s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId)
+                    ).length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                          No hay sesiones programadas para los días seleccionados en el filtro.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {/* TAB 2: RESUMEN DE HORAS (TABLA CON CHECKBOXES Y DESCARGA EXCEL) */}
+          {/* TAB 2: Resumen de Horas */}
           {activeTab === 'metricas' && (
             <div className="space-y-5">
-              
-              {/* TABLA PRINCIPAL DE RECUENTO POR ASIGNACIÓN CON CHECKBOXES */}
               <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                   <div>
@@ -1076,16 +1656,14 @@ export default function DocenteScheduleTool() {
                       Recuento Consolidado por Asignación
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Selecciona mediante los checkboxes las asignaciones a incluir en el cómputo y en el reporte en Excel.
+                      Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
                     </p>
                   </div>
 
-                  {/* ÚNICO BOTÓN DE DESCARGA EXCEL */}
                   <button
                     type="button"
-                    onClick={descargarExcelResumen}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
-                    title="Exportar las asignaciones seleccionadas a Excel"
+                    onClick={handleAbrirModalRequerimiento}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-sm"
                   >
                     <IconDownload className="w-3.5 h-3.5" />
                     Descargar Resumen Excel
@@ -1100,12 +1678,19 @@ export default function DocenteScheduleTool() {
                           <input
                             type="checkbox"
                             checked={asignaciones.length > 0 && seleccionadasResumen.length === asignaciones.length}
-                            onChange={handleToggleSeleccionTodas}
+                            onChange={() => {
+                              if (seleccionadasResumen.length === asignaciones.length) {
+                                setSeleccionadasResumen([]);
+                              } else {
+                                setSeleccionadasResumen(asignaciones.map((a) => a.id));
+                              }
+                            }}
                             className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                            title="Seleccionar o deseleccionar todas"
                           />
                         </th>
-                        <th className="py-2.5 px-3">Materia / Asignación</th>
+                        <th className="py-2.5 px-3">Programa</th>
+                        <th className="py-2.5 px-3">Cargo</th>
+                        <th className="py-2.5 px-3">Asignación</th>
                         <th className="py-2.5 px-3">Fecha Inicio</th>
                         <th className="py-2.5 px-3">Fecha Fin</th>
                         <th className="py-2.5 px-3 text-center">Sesiones</th>
@@ -1113,74 +1698,71 @@ export default function DocenteScheduleTool() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {resumenPorAsignacion.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-6 text-center text-slate-400 italic">
-                            No hay asignaciones cargadas en este momento.
-                          </td>
-                        </tr>
-                      ) : (
-                        resumenPorAsignacion.map((item) => {
-                          const estaMarcada = seleccionadasResumen.includes(item.id);
+                      {resumenPorAsignacion.map((item) => {
+                        const estaMarcada = seleccionadasResumen.includes(item.id);
 
-                          return (
-                            <tr
-                              key={item.id}
-                              className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
-                            >
-                              <td className="py-3 px-3 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={estaMarcada}
-                                  onChange={() => handleToggleSeleccionAsig(item.id)}
-                                  className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                                />
-                              </td>
-                              <td className="py-3 px-3 font-semibold text-slate-900">
-                                {item.materia}
-                                {item.id === asignacionSeleccionadaId && (
-                                  <span className="ml-2 text-[10px] text-slate-700 bg-slate-200 px-1.5 py-0.5 rounded font-normal">
-                                    En pantalla
-                                  </span>
-                                )}
-                              </td>
-                              <td className="py-3 px-3 text-slate-600 font-mono">
-                                {formatDateDDMMYYYY(item.fechaInicio)}
-                              </td>
-                              <td className="py-3 px-3 text-slate-600 font-mono">
-                                {formatDateDDMMYYYY(item.fechaFin)}
-                              </td>
-                              <td className="py-3 px-3 text-center font-mono text-slate-700">
-                                {item.totalSesiones} clases
-                              </td>
-                              <td className="py-3 px-3 text-right font-bold text-slate-900">
-                                {item.totalHoras.toFixed(1)} h
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
+                          >
+                            <td className="py-3 px-3 text-center">
+                              <input
+                                type="checkbox"
+                                checked={estaMarcada}
+                                onChange={() => {
+                                  setSeleccionadasResumen((prev) =>
+                                    prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
+                                  );
+                                }}
+                                className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                              />
+                            </td>
+                            <td className="py-3 px-3 text-slate-600">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700 mr-2">
+                                {item.programaTipo}
+                              </span>
+                              {item.programaNombre}
+                            </td>
+                            <td className="py-3 px-3 text-slate-700 font-medium">
+                              {item.cargo}
+                            </td>
+                            <td className="py-3 px-3 font-semibold text-slate-900">
+                              {item.materia}
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 font-mono">
+                              {formatDateDDMMYYYY(item.fechaInicio)}
+                            </td>
+                            <td className="py-3 px-3 text-slate-600 font-mono">
+                              {formatDateDDMMYYYY(item.fechaFin)}
+                            </td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-700">
+                              {item.totalSesiones} clases
+                            </td>
+                            <td className="py-3 px-3 text-right font-bold text-slate-900">
+                              {item.totalHoras.toFixed(1)} h
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
-                    {resumenPorAsignacion.length > 0 && (
-                      <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
-                        <tr>
-                          <td colSpan={4} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
-                            Total de Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
-                          </td>
-                          <td className="py-2.5 px-3 text-center font-mono text-xs">
-                            {totalesSeleccionados.totalSesiones} clases
-                          </td>
-                          <td className="py-2.5 px-3 text-right text-xs">
-                            {totalesSeleccionados.totalHoras.toFixed(1)} h
-                          </td>
-                        </tr>
-                      </tfoot>
-                    )}
+                    <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
+                      <tr>
+                        <td colSpan={6} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
+                          Total Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
+                        </td>
+                        <td className="py-2.5 px-3 text-center font-mono text-xs">
+                          {totalesSeleccionados.totalSesiones} clases
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-xs">
+                          {totalesSeleccionados.totalHoras.toFixed(1)} h
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
 
-              {/* BLOQUES MENSUALES Y SEMANALES DE LA MATERIA EN PANTALLA */}
               {currentAsig && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
@@ -1214,11 +1796,10 @@ export default function DocenteScheduleTool() {
                   </div>
                 </div>
               )}
-
             </div>
           )}
 
-          {/* TAB 3: AUDITORÍA DE CHOQUES */}
+          {/* TAB 3: Auditoría de Choques */}
           {activeTab === 'choques' && (
             <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
               <div>
@@ -1272,16 +1853,13 @@ export default function DocenteScheduleTool() {
               )}
             </div>
           )}
-
         </main>
       </div>
 
-      {/* ==========================================
-          MODAL: CREAR / EDITAR ASIGNACIÓN
-         ========================================== */}
+      {/* MODAL 1: CREAR / EDITAR ASIGNACIÓN */}
       {modalAsignacionAbierto && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-none flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-300 rounded max-w-xl w-full p-6 space-y-4">
+        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-slate-300 rounded max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <h3 className="font-bold text-slate-900 text-sm">
                 {modoEdicion ? 'Editar Asignación' : 'Nueva Asignación Docente'}
@@ -1296,25 +1874,68 @@ export default function DocenteScheduleTool() {
             </div>
 
             <form onSubmit={handleGuardarAsignacion} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Nombre de la Materia o Módulo
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. Materia I - Arquitectura de Software"
-                  value={formAsignacion.materia}
-                  onChange={(e) => setFormAsignacion({ ...formAsignacion, materia: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
-                />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block font-semibold text-slate-700 mb-1">Nombre del Programa Académico</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej. MAESTRÍA EN ENERGÍAS RENOVABLES"
+                    value={formAsignacion.programaNombre}
+                    onChange={(e) => setFormAsignacion({ ...formAsignacion, programaNombre: e.target.value })}
+                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Tipo de Programa</label>
+                  <select
+                    value={formAsignacion.programaTipo}
+                    onChange={(e) => setFormAsignacion({ ...formAsignacion, programaTipo: e.target.value })}
+                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer"
+                  >
+                    <option value="MAESTRIA">Maestría / Doctorado</option>
+                    <option value="DIPLOMADO">Diplomado / Curso</option>
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Fecha de Inicio
-                  </label>
+                  <label className="block font-semibold text-slate-700 mb-1">Cargo a Desempeñar</label>
+                  <select
+                    value={formAsignacion.cargo}
+                    onChange={(e) => setFormAsignacion({ ...formAsignacion, cargo: e.target.value })}
+                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer font-medium"
+                  >
+                    <option value="DOCENTE DE MAESTRIA">DOCENTE DE MAESTRÍA</option>
+                    <option value="DOCENTE DE DIPLOMADO">DOCENTE DE DIPLOMADO</option>
+                    <option value="COORDINADOR DE MAESTRIA">COORDINADOR DE MAESTRÍA</option>
+                    <option value="COORDINADOR DE DIPLOMADO">COORDINADOR DE DIPLOMADO</option>
+                  </select>
+                </div>
+
+                {!formAsignacion.cargo?.toUpperCase().includes('COORDINAD') ? (
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nombre de la Asignatura / Módulo</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej. Celdas de Combustible"
+                      value={formAsignacion.materia}
+                      onChange={(e) => setFormAsignacion({ ...formAsignacion, materia: e.target.value })}
+                      className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center pt-5 text-indigo-700 text-xs italic">
+                    <span>* El cargo de coordinador no requiere registrar asignatura.</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Fecha de Inicio</label>
                   <input
                     type="date"
                     required
@@ -1324,9 +1945,7 @@ export default function DocenteScheduleTool() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Fecha de Fin
-                  </label>
+                  <label className="block font-semibold text-slate-700 mb-1">Fecha de Fin</label>
                   <input
                     type="date"
                     required
@@ -1338,9 +1957,7 @@ export default function DocenteScheduleTool() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-2">
-                  Horario Semanal Recurrente
-                </label>
+                <label className="block font-semibold text-slate-700 mb-2">Horario Semanal Recurrente</label>
                 <div className="space-y-2 border border-slate-200 rounded p-3 max-h-52 overflow-y-auto bg-slate-50">
                   {DIAS_SEMANA.map((dia) => {
                     const conf = formAsignacion.dias[dia.id] || { activo: false, horaInicio: '18:00', horaFin: '20:00' };
@@ -1360,10 +1977,7 @@ export default function DocenteScheduleTool() {
                               const checked = e.target.checked;
                               setFormAsignacion({
                                 ...formAsignacion,
-                                dias: {
-                                  ...formAsignacion.dias,
-                                  [dia.id]: { ...conf, activo: checked }
-                                }
+                                dias: { ...formAsignacion.dias, [dia.id]: { ...conf, activo: checked } }
                               });
                             }}
                             className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
@@ -1381,10 +1995,7 @@ export default function DocenteScheduleTool() {
                                 const val = e.target.value;
                                 setFormAsignacion({
                                   ...formAsignacion,
-                                  dias: {
-                                    ...formAsignacion.dias,
-                                    [dia.id]: { ...conf, horaInicio: val }
-                                  }
+                                  dias: { ...formAsignacion.dias, [dia.id]: { ...conf, horaInicio: val } }
                                 });
                               }}
                               className="border border-slate-300 rounded px-1.5 py-1 text-xs bg-white"
@@ -1397,10 +2008,7 @@ export default function DocenteScheduleTool() {
                                 const val = e.target.value;
                                 setFormAsignacion({
                                   ...formAsignacion,
-                                  dias: {
-                                    ...formAsignacion.dias,
-                                    [dia.id]: { ...conf, horaFin: val }
-                                  }
+                                  dias: { ...formAsignacion.dias, [dia.id]: { ...conf, horaFin: val } }
                                 });
                               }}
                               className="border border-slate-300 rounded px-1.5 py-1 text-xs bg-white"
@@ -1417,13 +2025,13 @@ export default function DocenteScheduleTool() {
                 <button
                   type="button"
                   onClick={() => setModalAsignacionAbierto(false)}
-                  className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer transition-colors"
+                  className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer transition-colors"
+                  className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
                 >
                   {modoEdicion ? 'Actualizar Asignación' : 'Crear Asignación'}
                 </button>
@@ -1433,11 +2041,9 @@ export default function DocenteScheduleTool() {
         </div>
       )}
 
-      {/* ==========================================
-          MODAL: EXCEPCIÓN PUNTUAL POR DÍA
-         ========================================== */}
+      {/* MODAL 2: AJUSTE PUNTUAL DE FECHA */}
       {modalExcepcion && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-none flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white border border-slate-300 rounded max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <h3 className="font-bold text-slate-900 text-sm">
@@ -1458,11 +2064,11 @@ export default function DocenteScheduleTool() {
                 <select
                   value={excepForm.tipo}
                   onChange={(e) => setExcepForm({ ...excepForm, tipo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer"
                 >
                   <option value="MODIFICAR">Cambiar horario para esta fecha puntual</option>
                   <option value="CANCELAR">Cancelar clase en esta fecha</option>
-                  <option value="RESET">Restablecer a horario semanal regular</option>
+                  <option value="RESET">Restablecer a horario regular</option>
                 </select>
               </div>
 
@@ -1474,7 +2080,7 @@ export default function DocenteScheduleTool() {
                       type="time"
                       value={excepForm.horaInicio}
                       onChange={(e) => setExcepForm({ ...excepForm, horaInicio: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                      className="w-full border border-slate-300 rounded p-1.5"
                     />
                   </div>
                   <div>
@@ -1483,7 +2089,7 @@ export default function DocenteScheduleTool() {
                       type="time"
                       value={excepForm.horaFin}
                       onChange={(e) => setExcepForm({ ...excepForm, horaFin: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5 focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                      className="w-full border border-slate-300 rounded p-1.5"
                     />
                   </div>
                 </div>
@@ -1493,10 +2099,10 @@ export default function DocenteScheduleTool() {
                 <label className="block text-slate-600 mb-1">Motivo / Justificación</label>
                 <input
                   type="text"
-                  placeholder="Ej. Reposición, ajuste operativo, etc."
+                  placeholder="Ej. Reposición, ajuste operativo..."
                   value={excepForm.motivo}
                   onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2 focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                  className="w-full border border-slate-300 rounded p-2"
                 />
               </div>
             </div>
@@ -1505,14 +2111,14 @@ export default function DocenteScheduleTool() {
               <button
                 type="button"
                 onClick={() => setModalExcepcion(null)}
-                className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 type="button"
                 onClick={guardarExcepcion}
-                className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer transition-colors"
+                className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
               >
                 Aplicar Ajuste
               </button>
@@ -1521,6 +2127,488 @@ export default function DocenteScheduleTool() {
         </div>
       )}
 
+      {/* MODAL 3: REQUERIMIENTO DE CONTRATACIÓN (COMPLETO) */}
+      {modalRequerimientoAbierto && requerimientoForm && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-slate-300 rounded-lg max-w-4xl w-full p-6 space-y-5 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Requerimiento de Contratación Docente
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Verifica los datos generales y los parámetros por programa para emitir el requerimiento formal.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalRequerimientoAbierto(false)}
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <IconX className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmarDescargaExcel} className="flex-1 overflow-y-auto space-y-6 pr-2 text-xs">
+              {/* Sección 1: Información General del Contratado */}
+              <div className="border border-slate-200 rounded p-4 bg-slate-50/50 space-y-3">
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-200 pb-1.5">
+                  1. Información General del Contratado
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nombre Completo</label>
+                    <input
+                      type="text"
+                      required
+                      value={requerimientoForm.docenteInfo.nombreCompleto}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, nombreCompleto: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Profesión</label>
+                    <input
+                      type="text"
+                      value={requerimientoForm.docenteInfo.profesion}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, profesion: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nacionalidad</label>
+                    <input
+                      type="text"
+                      value={requerimientoForm.docenteInfo.nacionalidad}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, nacionalidad: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Correo Electrónico</label>
+                    <input
+                      type="email"
+                      value={requerimientoForm.docenteInfo.correo}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, correo: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
+                    />
+                  </div>
+
+                  {/* Listas Desplegables Condicionales */}
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Tipo de Contrato</label>
+                    <select
+                      value={requerimientoForm.docenteInfo.tipoContrato}
+                      onChange={(e) => {
+                        const nuevoContrato = e.target.value;
+                        const nuevaContratacion = nuevoContrato === 'SERVICIOS PERSONALES'
+                          ? 'TIEMPO ADICIONAL'
+                          : 'TIEMPO NORMAL';
+
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: {
+                            ...requerimientoForm.docenteInfo,
+                            tipoContrato: nuevoContrato,
+                            tipoContratacion: nuevaContratacion
+                          }
+                        });
+                      }}
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs cursor-pointer focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                    >
+                      <option value="SERVICIOS PROFESIONALES NO PERSONALES">SERVICIOS PROFESIONALES NO PERSONALES</option>
+                      <option value="SERVICIOS PERSONALES">SERVICIOS PERSONALES</option>
+                      <option value="AD HONOREM">AD HONOREM</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Tipo de Contratación</label>
+                    <select
+                      value={requerimientoForm.docenteInfo.tipoContratacion}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, tipoContratacion: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs cursor-pointer focus:ring-1 focus:ring-slate-800 focus:outline-none"
+                    >
+                      {requerimientoForm.docenteInfo.tipoContrato === 'SERVICIOS PERSONALES' ? (
+                        <>
+                          <option value="TIEMPO ADICIONAL">TIEMPO ADICIONAL</option>
+                          <option value="TIEMPO INTEGRAL">TIEMPO INTEGRAL</option>
+                        </>
+                      ) : (
+                        <option value="TIEMPO NORMAL">TIEMPO NORMAL</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Modalidad de Servicio</label>
+                    <input
+                      type="text"
+                      value={requerimientoForm.docenteInfo.modalidadServicio}
+                      onChange={(e) =>
+                        setRequerimientoForm({
+                          ...requerimientoForm,
+                          docenteInfo: { ...requerimientoForm.docenteInfo, modalidadServicio: e.target.value }
+                        })
+                      }
+                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
+                    />
+                  </div>
+
+                  {/* Si es Tiempo Integral se piden sueldo, porcentaje y meses; si no, calificación y pago por hora */}
+                  {requerimientoForm.docenteInfo.tipoContratacion === 'TIEMPO INTEGRAL' ? (
+                    <>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Sueldo Nominal ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={requerimientoForm.docenteInfo.sueldoNominal}
+                          onChange={(e) =>
+                            setRequerimientoForm({
+                              ...requerimientoForm,
+                              docenteInfo: { ...requerimientoForm.docenteInfo, sueldoNominal: e.target.value }
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded p-1.5 bg-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Porcentaje a Pagar (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={requerimientoForm.docenteInfo.porcentajePago}
+                          onChange={(e) =>
+                            setRequerimientoForm({
+                              ...requerimientoForm,
+                              docenteInfo: { ...requerimientoForm.docenteInfo, porcentajePago: e.target.value }
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded p-1.5 bg-white font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Cantidad de Meses</label>
+                        <input
+                          type="number"
+                          value={requerimientoForm.docenteInfo.cantidadMeses}
+                          onChange={(e) =>
+                            setRequerimientoForm({
+                              ...requerimientoForm,
+                              docenteInfo: { ...requerimientoForm.docenteInfo, cantidadMeses: e.target.value }
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded p-1.5 bg-white font-bold"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Calificación Docente</label>
+                        <select
+                          value={requerimientoForm.docenteInfo.calificacionDocente}
+                          onChange={(e) =>
+                            setRequerimientoForm({
+                              ...requerimientoForm,
+                              docenteInfo: { ...requerimientoForm.docenteInfo, calificacionDocente: e.target.value }
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded p-1.5 bg-white cursor-pointer font-bold"
+                        >
+                          {['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'].map((f) => (
+                            <option key={f} value={f}>{f}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-semibold text-slate-700 mb-1">Pago por Hora ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={requerimientoForm.docenteInfo.pagoPorHora}
+                          onChange={(e) =>
+                            setRequerimientoForm({
+                              ...requerimientoForm,
+                              docenteInfo: { ...requerimientoForm.docenteInfo, pagoPorHora: e.target.value }
+                            })
+                          }
+                          className="w-full border border-slate-300 rounded p-1.5 bg-white font-bold"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Sección 2: Programas y Asignaciones Dinámicas */}
+              <div className="space-y-4">
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider border-b border-slate-200 pb-1.5">
+                  2. Parámetros Académicos por Programa
+                </h4>
+
+                {requerimientoForm.programas.map((prog, pIdx) => {
+                  const esDip = prog.tipo === 'DIPLOMADO';
+
+                  return (
+                    <div key={pIdx} className="border border-slate-300 rounded p-4 bg-white space-y-4">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                        <span className="font-bold text-slate-900 text-xs uppercase">
+                          Programa {pIdx + 1}: {prog.nombre}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {prog.tipo}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block font-medium text-slate-600 mb-1">Edición / Cohorte</label>
+                          <input
+                            type="text"
+                            value={prog.edicionCohorte}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const nuevosProgs = [...requerimientoForm.programas];
+                              nuevosProgs[pIdx].edicionCohorte = val;
+                              setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                            }}
+                            className="w-full border border-slate-300 rounded p-1.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-medium text-slate-600 mb-1">Coordinador del Programa</label>
+                          <input
+                            type="text"
+                            value={prog.coordinador}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const nuevosProgs = [...requerimientoForm.programas];
+                              nuevosProgs[pIdx].coordinador = val;
+                              setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                            }}
+                            className="w-full border border-slate-300 rounded p-1.5"
+                          />
+                        </div>
+
+                        {/* Alumnos y Sobrecupo a nivel de Programa */}
+                        <div>
+                          <label className="block font-semibold text-slate-700 mb-1">Alumnos Inscritos (del Programa)</label>
+                          <input
+                            type="number"
+                            value={prog.alumnosInscritos}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const nuevosProgs = [...requerimientoForm.programas];
+                              nuevosProgs[pIdx].alumnosInscritos = val;
+                              setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                            }}
+                            className="w-full border border-slate-300 rounded p-1.5 font-bold"
+                          />
+                        </div>
+
+                        {esDip && (
+                          <>
+                            <div>
+                              <label className="block font-semibold text-slate-700 mb-1">Factor Sobrecupo (del Programa)</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={prog.factorSobrecupo}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].factorSobrecupo = val;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5 font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="block font-medium text-slate-600 mb-1">Clasificación del Proyecto</label>
+                              <input
+                                type="text"
+                                value={prog.clasificacionProyecto}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].clasificacionProyecto = val;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Asignaciones del programa */}
+                      <div className="space-y-3 pt-2">
+                        <span className="text-[11px] font-bold text-slate-700 block uppercase">
+                          Asignaciones incluidas:
+                        </span>
+
+                        {prog.asignaciones.map((asig, aIdx) => {
+                          const esCoord = asig.cargo?.toUpperCase().includes('COORDINAD');
+
+                          return (
+                            <div key={aIdx} className="p-3 bg-slate-50 border border-slate-200 rounded space-y-3">
+                              <div className="flex items-center justify-between font-bold text-slate-800 text-[11px]">
+                                <span>
+                                  Asignación {aIdx + 1}: {esCoord ? 'COORDINACIÓN ACADÉMICA' : asig.asignatura}
+                                </span>
+                                <span className="text-slate-500 font-normal">
+                                  {formatearRangoFechasTexto(asig.fechaInicio, asig.fechaFin)}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                                <div>
+                                  <label className="block text-[10px] text-slate-600 mb-0.5">Cargo</label>
+                                  <input
+                                    type="text"
+                                    value={asig.cargo}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const nuevosProgs = [...requerimientoForm.programas];
+                                      nuevosProgs[pIdx].asignaciones[aIdx].cargo = val;
+                                      if (val.toUpperCase().includes('COORDINAD')) {
+                                        nuevosProgs[pIdx].asignaciones[aIdx].funciones = FUNCION_COORDINADOR_DEFAULT;
+                                      }
+                                      setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                    }}
+                                    className="w-full border border-slate-300 rounded p-1 bg-white"
+                                  />
+                                </div>
+
+                                {!esCoord ? (
+                                  <div>
+                                    <label className="block text-[10px] text-slate-600 mb-0.5">Asignatura</label>
+                                    <input
+                                      type="text"
+                                      value={asig.asignatura}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const nuevosProgs = [...requerimientoForm.programas];
+                                        nuevosProgs[pIdx].asignaciones[aIdx].asignatura = val;
+                                        setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                      }}
+                                      className="w-full border border-slate-300 rounded p-1 bg-white"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center pt-3 text-[11px] text-indigo-700 italic">
+                                    <span>* Sin asignatura asignada</span>
+                                  </div>
+                                )}
+
+                                <div>
+                                  <label className="block text-[10px] text-slate-600 mb-0.5">Módulo / Ciclo</label>
+                                  <input
+                                    type="text"
+                                    value={asig.moduloCiclo}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const nuevosProgs = [...requerimientoForm.programas];
+                                      nuevosProgs[pIdx].asignaciones[aIdx].moduloCiclo = val;
+                                      setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                    }}
+                                    className="w-full border border-slate-300 rounded p-1 bg-white"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] text-slate-600 mb-0.5">Cantidad Horas (Calculadas)</label>
+                                  <input
+                                    type="number"
+                                    step="0.5"
+                                    value={asig.cantidadHoras}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const nuevosProgs = [...requerimientoForm.programas];
+                                      nuevosProgs[pIdx].asignaciones[aIdx].cantidadHoras = val;
+                                      setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                    }}
+                                    className="w-full border border-slate-300 rounded p-1 bg-white font-bold"
+                                  />
+                                </div>
+
+                                {esCoord && (
+                                  <div>
+                                    <label className="block text-[10px] text-indigo-700 font-semibold mb-0.5">
+                                      Valor por Hora Coordinación ($)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={asig.pagoPorHora}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        const nuevosProgs = [...requerimientoForm.programas];
+                                        nuevosProgs[pIdx].asignaciones[aIdx].pagoPorHora = val;
+                                        setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                      }}
+                                      className="w-full border border-indigo-300 rounded p-1 bg-white font-bold text-indigo-900"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setModalRequerimientoAbierto(false)}
+                  className="px-4 py-2 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-semibold cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  <IconDownload className="w-4 h-4" />
+                  Generar y Descargar Excel (+ Respaldo JSON)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
