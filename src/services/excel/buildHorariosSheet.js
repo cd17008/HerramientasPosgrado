@@ -1,22 +1,6 @@
 import XLSX from 'xlsx-js-style';
-
-const DIAS_SEMANA = [
-  { id: 1, nombre: 'Lunes' },
-  { id: 2, nombre: 'Martes' },
-  { id: 3, nombre: 'Miércoles' },
-  { id: 4, nombre: 'Jueves' },
-  { id: 5, nombre: 'Viernes' },
-  { id: 6, nombre: 'Sábado' },
-  { id: 0, nombre: 'Domingo' }
-];
-
-const formatTime12h = (timeStr) => {
-  if (!timeStr) return '';
-  const [h, m] = timeStr.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hour12 = h % 12 || 12;
-  return `${hour12}:${String(m).padStart(2, '0')}${ampm}`;
-};
+import { DIAS_SEMANA } from '../../const/academico';
+import { formatTime12h } from '../../utils/dateUtils';
 
 const borderThin = {
   top: { style: 'thin', color: { rgb: 'CBD5E1' } },

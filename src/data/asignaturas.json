@@ -1,0 +1,1021 @@
+{
+  "MINGES": [
+    {
+      "codigo": "EST001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Sismología Ingenieril y Evaluación de la Amenaza Sísmica",
+      "uv": 4
+    },
+    {
+      "codigo": "EST002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Análisis Numérico",
+      "uv": 4
+    },
+    {
+      "codigo": "EST003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Dinámica de Estructuras",
+      "uv": 4
+    },
+    {
+      "codigo": "EST004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Elementos Finitos",
+      "uv": 4
+    },
+    {
+      "codigo": "EST005",
+      "ciclo": "II",
+      "correlativo": "5",
+      "nombre": "Placas y Cascarones",
+      "uv": 4
+    },
+    {
+      "codigo": "EST006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Dinámica de Suelos",
+      "uv": 4
+    },
+    {
+      "codigo": "EST007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Estructuras de Mampostería",
+      "uv": 5
+    },
+    {
+      "codigo": "EST008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Concreto Presforzado",
+      "uv": 5
+    },
+    {
+      "codigo": "EST009",
+      "ciclo": "III",
+      "correlativo": "9",
+      "nombre": "Fundamentos de Ingeniería Sísmica",
+      "uv": 5
+    },
+    {
+      "codigo": "EST010",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "Estructuras de Concreto Reforzado",
+      "uv": 5
+    },
+    {
+      "codigo": "EST011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Interacción Suelo-Estructuras",
+      "uv": 5
+    },
+    {
+      "codigo": "EST012",
+      "ciclo": "IV",
+      "correlativo": "12",
+      "nombre": "Estructuras de Acero",
+      "uv": 5
+    },
+    {
+      "codigo": "EST013",
+      "ciclo": "IV",
+      "correlativo": "13",
+      "nombre": "Patología de Estructuras",
+      "uv": 5
+    },
+    {
+      "codigo": "EST014",
+      "ciclo": "IV",
+      "correlativo": "14",
+      "nombre": "Diseño de Puentes",
+      "uv": 5
+    }
+  ],
+  "MAFEGIP": [
+    {
+      "codigo": "FEP001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Fundamentos de la Formulación de Proyectos",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Análisis de Viabilidad de Mercado de los Proyectos I",
+      "uv": 5
+    },
+    {
+      "codigo": "FEP003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Análisis de Viabilidad de Mercado de los Proyectos II",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Análisis de Viabilidad Técnica de los Proyectos I",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP005",
+      "ciclo": "I",
+      "correlativo": "5",
+      "nombre": "Análisis de Viabilidad Técnica de los Proyectos II",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Evaluaciones Medioambientales de los Proyectos",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Fundamentos Económicos",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Bases Contables y Estudio Económico",
+      "uv": 5
+    },
+    {
+      "codigo": "FEP009",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Desarrrollo Local, Evaluación Económica y Social de Proyectos",
+      "uv": 5
+    },
+    {
+      "codigo": "FEP010",
+      "ciclo": "II",
+      "correlativo": "10",
+      "nombre": "Evaluación Financiera de los Proyectos",
+      "uv": 5
+    },
+    {
+      "codigo": "FEP011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Análisis y Manejo del Riesgo en los Proyectos",
+      "uv": 3
+    },
+    {
+      "codigo": "FEP012",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Gestión de Financiamiento",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP013",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Planeación de la Gestión de la Implementación de Proyectos",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP014",
+      "ciclo": "III",
+      "correlativo": "14",
+      "nombre": "Organización, Ejecución y Control de la Implementación del Proyectos",
+      "uv": 4
+    },
+    {
+      "codigo": "FEP015",
+      "ciclo": "III",
+      "correlativo": "15",
+      "nombre": "Garantizando el Éxito en los Proyectos",
+      "uv": 4
+    }
+  ],
+  "MERMA": [
+    {
+      "codigo": "ERMA01",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Fundamentos de Termodinámica y Transferencia de Calor",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA02",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Energía Renovable y Eficiencia Energética",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA03",
+      "ciclo": "I",
+      "correlativo": "3.1",
+      "nombre": "Recurso Solar y Energía Solar Fotovoltaíca parte 1",
+      "uv": 6
+    },
+    {
+      "codigo": "ERMA03",
+      "ciclo": "I",
+      "correlativo": "3.2",
+      "nombre": "Recurso Solar y Energía Solar Fotovoltaíca parte 2",
+      "uv": 6
+    },
+    {
+      "codigo": "ERMA04",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Energía Solar Térmica",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA05",
+      "ciclo": "I",
+      "correlativo": "5",
+      "nombre": "Arquitectura Bioclimática Eficiente",
+      "uv": 5
+    },
+    {
+      "codigo": "ERMA06",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Mini Centrales Hidráulicas y Mareomotríz",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA07",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Energía Geotérmica",
+      "uv": 6
+    },
+    {
+      "codigo": "ERMA08",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Celdas de Combustible y Pilas de Hidrógeno",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA09",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Energía Eólica",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA10",
+      "ciclo": "II",
+      "correlativo": "10",
+      "nombre": "Biomasa",
+      "uv": 4
+    },
+    {
+      "codigo": "ERMA11",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Generación Distribuida y Mercados Eléctricos",
+      "uv": 5
+    },
+    {
+      "codigo": "ERMA12",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Fundamentos de Ingeniería Ambiental y Gestión Integral de Residuos",
+      "uv": 5
+    },
+    {
+      "codigo": "ERMA13",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Evaluación de Impacto Ambiental",
+      "uv": 5
+    },
+    {
+      "codigo": "ERMA14",
+      "ciclo": "III",
+      "correlativo": "14",
+      "nombre": "Formulación y Evaluación de Proyectos Energéticos",
+      "uv": 5
+    },
+    {
+      "codigo": "ERMA15",
+      "ciclo": "III",
+      "correlativo": "15",
+      "nombre": "Seminario de Tesis I",
+      "uv": 3
+    },
+    {
+      "codigo": "ERMA16",
+      "ciclo": "IV",
+      "correlativo": "16",
+      "nombre": "Seminario de Tesis II",
+      "uv": 2
+    }
+  ],
+  "MIPIECC": [
+    {
+      "codigo": "MCC001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Fundamentos de Programación",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Fundamentos de Redes y Automatización",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Fundamentos de Estadística y Simulación",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Evaluación y Mantenimiento de Procesos Industriales Automatizados",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC005",
+      "ciclo": "II",
+      "correlativo": "5",
+      "nombre": "Fundamentos de Bases de Datos",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Arquitectura de Datawarehouse",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Big Data",
+      "uv": 5
+    },
+    {
+      "codigo": "MCC008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Minería de Datos",
+      "uv": 5
+    },
+    {
+      "codigo": "MCC009",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Diseño de Experimentos",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC010",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "Analítica de Datos",
+      "uv": 5
+    },
+    {
+      "codigo": "MCC011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Aprendizaje de Máquina",
+      "uv": 5
+    },
+    {
+      "codigo": "MCC012",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Automatización de Procesos Industriales",
+      "uv": 5
+    },
+    {
+      "codigo": "MCC013",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Sistemas de Control Industrial",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC014",
+      "ciclo": "III",
+      "correlativo": "14",
+      "nombre": "Simulación de Sistemas",
+      "uv": 4
+    },
+    {
+      "codigo": "MCC015",
+      "ciclo": "IV",
+      "correlativo": "15",
+      "nombre": "Prácticas Profesionales",
+      "uv": 4
+    }
+  ],
+  "MIPIET": [
+    {
+      "codigo": "MTL001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Fundamentos de Programación",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Fundamentos de Redes y Automatización",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Fundamentos de Estadistica y Simulación",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Evaluación y Mantenimiento de Procesos Industriales Automatizados",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL005",
+      "ciclo": "II",
+      "correlativo": "5",
+      "nombre": "Infraestructura de Redes Hibridas",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Redes Inalámbricas",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Introducción a Ciberseguridad",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Arquitectura de Telecomunicaciones",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL009",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Computación en la Nube",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL010",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "Infraestructura de Internet de las Cosas",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Diseño Avanzado de Redes y Solución de Problemas",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL012",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Gestión de Proyectos de Telecomunicaciones",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL013",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Administración de Redes de Telecomunicaciones",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL014",
+      "ciclo": "III",
+      "correlativo": "14",
+      "nombre": "Gestión y Monitoreo de Redes",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL015",
+      "ciclo": "III",
+      "correlativo": "15",
+      "nombre": "Normativa y Seguridad en Instalaciones de Telecomunicaciones",
+      "uv": 4
+    },
+    {
+      "codigo": "MTL016",
+      "ciclo": "IV",
+      "correlativo": "16",
+      "nombre": "Prácticas Profesionales",
+      "uv": 4
+    }
+  ],
+  "MPRL": [
+    {
+      "codigo": "MPRL001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Administración de Operaciones",
+      "uv": 5
+    },
+    {
+      "codigo": "MPRL002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Fundamentos de la Prevención de Riesgos Laborales",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Legislación Laboral y Normalización",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Seguridad Ocupacional I",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL005",
+      "ciclo": "I",
+      "correlativo": "5",
+      "nombre": "Seguridad Ocupacional II",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Higiene Ocupacional I",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Higiene Ocupacional II",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Medicina del Trabajo",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL009",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Psicología Laboral",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL010",
+      "ciclo": "II",
+      "correlativo": "10",
+      "nombre": "Ergonomía I",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Ergonomía II",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL012",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Técnicas de Evaluación de Riesgos",
+      "uv": 5
+    },
+    {
+      "codigo": "MPRL013",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Administración de Emergencias",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL014",
+      "ciclo": "III",
+      "correlativo": "14",
+      "nombre": "Gestión de la Seguridad y Salud en el Trabajo",
+      "uv": 4
+    },
+    {
+      "codigo": "MPRL015",
+      "ciclo": "III",
+      "correlativo": "15",
+      "nombre": "Ética y Liderazgo en Prevención de Riesgos",
+      "uv": 3
+    },
+    {
+      "codigo": "MPRL016",
+      "ciclo": "IV",
+      "correlativo": "16",
+      "nombre": "Seminario de Tesis",
+      "uv": 4
+    }
+  ],
+  "MVIAL": [
+    {
+      "codigo": "MIV001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "Bases Técnicas para Ingeniería Vial",
+      "uv": 2
+    },
+    {
+      "codigo": "MIV002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "Ingeniería de Transporte",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "Ingeniería de Tránsito y Seguridad Vial",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "Topografía Aplicada e Introducción a SIG",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV005",
+      "ciclo": "I",
+      "correlativo": "5",
+      "nombre": "Diseño Geométrico",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "Materiales para Obra Vial",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "Mecánica de Suelos para Vías Terrestres",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "Diseño y Análisis Básico de Pavimentos",
+      "uv": 5
+    },
+    {
+      "codigo": "MIV009",
+      "ciclo": "II",
+      "correlativo": "9",
+      "nombre": "Diseño y Análisis Avanzado de Pavimentos",
+      "uv": 5
+    },
+    {
+      "codigo": "MIV010",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "Diseño de Mezcla para Capa de Rodadura de Pavimentos",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "Control y Aseguramiento de Calidad en Obras Viales",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV012",
+      "ciclo": "III",
+      "correlativo": "12",
+      "nombre": "Evaluación de Impacto Ambiental",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV013",
+      "ciclo": "III",
+      "correlativo": "13",
+      "nombre": "Drenaje para Vías Terrestres",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV014",
+      "ciclo": "IV",
+      "correlativo": "14",
+      "nombre": "Evaluación Técnica de Pavimentos",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV015",
+      "ciclo": "IV",
+      "correlativo": "15",
+      "nombre": "Conservación de Pavimentos",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV016",
+      "ciclo": "IV",
+      "correlativo": "16",
+      "nombre": "Gestión de Pavimentos",
+      "uv": 4
+    },
+    {
+      "codigo": "MIV017",
+      "ciclo": "IV",
+      "correlativo": "17",
+      "nombre": "Electiva I",
+      "uv": 3
+    },
+    {
+      "codigo": "MIV018",
+      "ciclo": "IV",
+      "correlativo": "18",
+      "nombre": "Electiva II",
+      "uv": 3
+    }
+  ],
+  "MGRH": [
+    {
+      "codigo": "MAG01",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "MAG01",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG02",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "MAG02",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG03",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "MAG03",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG04",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "MAG04",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG05",
+      "ciclo": "II",
+      "correlativo": "5",
+      "nombre": "MAG05",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG06",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "MAG06",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG07",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "MAG07",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG08",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "MAG08",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG09",
+      "ciclo": "III",
+      "correlativo": "9",
+      "nombre": "MAG09",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG10",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "MAG10",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG11",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "MAG11",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG12",
+      "ciclo": "IV",
+      "correlativo": "12",
+      "nombre": "MAG12",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG13",
+      "ciclo": "IV",
+      "correlativo": "13",
+      "nombre": "MAG13",
+      "uv": null,
+      "pendiente": true
+    },
+    {
+      "codigo": "MAG14",
+      "ciclo": "IV",
+      "correlativo": "14",
+      "nombre": "MAG14",
+      "uv": null,
+      "pendiente": true
+    }
+  ],
+  "DISISM": [
+    {
+      "codigo": "DIS001",
+      "ciclo": "I",
+      "correlativo": "1",
+      "nombre": "DIS001",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS002",
+      "ciclo": "I",
+      "correlativo": "2",
+      "nombre": "DIS002",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS003",
+      "ciclo": "I",
+      "correlativo": "3",
+      "nombre": "DIS003",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS004",
+      "ciclo": "I",
+      "correlativo": "4",
+      "nombre": "DIS004",
+      "uv": 3,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS005",
+      "ciclo": "II",
+      "correlativo": "5",
+      "nombre": "DIS005",
+      "uv": 3,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS006",
+      "ciclo": "II",
+      "correlativo": "6",
+      "nombre": "DIS006",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS007",
+      "ciclo": "II",
+      "correlativo": "7",
+      "nombre": "DIS007",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS008",
+      "ciclo": "II",
+      "correlativo": "8",
+      "nombre": "DIS008",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS009",
+      "ciclo": "III",
+      "correlativo": "9",
+      "nombre": "DIS009",
+      "uv": 3,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS010",
+      "ciclo": "III",
+      "correlativo": "10",
+      "nombre": "DIS010",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS011",
+      "ciclo": "III",
+      "correlativo": "11",
+      "nombre": "DIS011",
+      "uv": 2,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS012",
+      "ciclo": "IV",
+      "correlativo": "12",
+      "nombre": "DIS012",
+      "uv": 2,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS013",
+      "ciclo": "IV",
+      "correlativo": "13",
+      "nombre": "DIS013",
+      "uv": 4,
+      "pendiente": true
+    },
+    {
+      "codigo": "DIS014",
+      "ciclo": "IV",
+      "correlativo": "14",
+      "nombre": "DIS014",
+      "uv": 2,
+      "pendiente": true
+    }
+  ]
+}

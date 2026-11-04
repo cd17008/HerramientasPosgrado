@@ -1,0 +1,372 @@
+[
+  {
+    "codigo": "MINGES",
+    "nombre": "MAESTRÍA EN INGENIERÍA ESTRUCTURAL",
+    "registro": "M10502",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MAFEGIP",
+    "nombre": "MAESTRÍA EN FORMULACIÓN EVALUACIÓN Y GESTIÓN DE LA IMPLEMENTACIÓN DE PROYECTOS",
+    "registro": "M10506",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MPRL",
+    "nombre": "MAESTRÍA EN PREVENCIÓN DE RIESGOS LABORALES",
+    "registro": null,
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MGRH",
+    "nombre": "MAESTRÍA EN GESTIÓN DE RECURSOS HIDROGEOLÓGICOS",
+    "registro": "M10501",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MIPIECC",
+    "nombre": "MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA - ESPECIALIZACIÓN EN CIENCIAS DE LA COMPUTACIÓN",
+    "registro": "M10507",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MIPIET",
+    "nombre": "MAESTRÍA EN INGENIERÍA PARA LA INDUSTRIA - ESPECIALIZACIÓN EN TELECOMUNICACIONES",
+    "registro": "M10508",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MVIAL",
+    "nombre": "MAESTRÍA EN INGENIERÍA VIAL",
+    "registro": "M10504",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "MERMA",
+    "nombre": "MAESTRÍA EN ENERGÍAS RENOVABLES Y MEDIO AMBIENTE",
+    "registro": "M10503",
+    "unidad": "MAYDOC",
+    "categoria": "MAESTRIA",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "DISISM",
+    "nombre": "DOCTORADO EN INGENIERÍA SÍSMICA",
+    "registro": "D10501",
+    "unidad": "MAYDOC",
+    "categoria": "DOCTORADO",
+    "tipo": "MAESTRIA",
+    "clasificacion": null,
+    "nombreCorto": null
+  },
+  {
+    "codigo": "CAUTOCAD",
+    "nombre": "CURSO EN AUTODESK AUTOCAD",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Autodesk AutoCAD"
+  },
+  {
+    "codigo": "CREVIT",
+    "nombre": "CURSO EN AUTODESK REVIT",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Autodesk Revit"
+  },
+  {
+    "codigo": "CPMINGES",
+    "nombre": "CURSO PROPEDÉUTICO DE LA MAESTRÍA EN INGENIERÍA ESTRUCTURAL",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "B",
+    "nombreCorto": "C. Propedéutico de MINGES"
+  },
+  {
+    "codigo": "CDISEASE",
+    "nombre": "CURSO EN CURSO DE DISIPACIÓN DE ENERGÍA Y AISLAMIENTO SÍSMICO DE ESTRUCTURAS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Curso de Disipación de Energía y Aislamiento Sísmico de Estructuras"
+  },
+  {
+    "codigo": "CEEVE",
+    "nombre": "CURSO EN ESTRATEGIAS PARA LA EVALUACIÓN DE LA VULNERABILIDAD EN EDIFICACIONES",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Estrategias Para La Evaluación de la Vulnerabilidad en Edificaciones"
+  },
+  {
+    "codigo": "CMPRL-SSO",
+    "nombre": "CURSO EN FORMACIÓN EN PREVENCIÓN DE RIESGOS LABORALES PARA MIEMBROS DE COMITÉ DE SEGURIDAD Y SALUD OCUPACIONAL",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Formación en PRL para MCSSO"
+  },
+  {
+    "codigo": "CEBI",
+    "nombre": "CURSO EN MICROSOFT EXCEL BÁSICO INTERMEDIO",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. Microsoft Excel Básico Intermedio"
+  },
+  {
+    "codigo": "CEIA",
+    "nombre": "CURSO EN MICROSOFT EXCEL INTERMEDIO AVANZADO",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "B",
+    "nombreCorto": "C. Microsoft Excel Intermedio Avanzado"
+  },
+  {
+    "codigo": "CRPA",
+    "nombre": "CURSO EN RPA - AUTOMATIZACIÓN DEL PROCESAMIENTO Y COMUNICACIÓN DE INFORMACIÓN DIGITAL",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "C. RPA - Automatización del Procesamiento y Comunicación de Información Digital"
+  },
+  {
+    "codigo": "CPRO",
+    "nombre": "CURSO EN PROTECCIÓN RADIOLÓGICA OCUPACIONAL",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "CURSO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "B",
+    "nombreCorto": "C. Protección Radiológica Ocupacional"
+  },
+  {
+    "codigo": "DAA",
+    "nombre": "DIPLOMADO EN AVALÚOS DE ACTIVOS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Avalúos de Activos"
+  },
+  {
+    "codigo": "DBPM",
+    "nombre": "DIPLOMADO EN BUENAS PRÁCTICAS DE MANUFACTURA",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Buenas Prácticas de Manufactura"
+  },
+  {
+    "codigo": "DCIA",
+    "nombre": "DIPLOMADO EN COMERCIO INTERNACIONAL Y ADUANAS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Comercio Internacional y Aduanas"
+  },
+  {
+    "codigo": "DGEO",
+    "nombre": "DIPLOMADO EN DE ESPECIALIZACIÓN EN GEOTERMIA",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. de Especialización en Geotermia"
+  },
+  {
+    "codigo": "DFITD",
+    "nombre": "DIPLOMADO EN FINANZAS IMPRESCINDIBLES PARA LA TOMA DE DECISIONES",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "B",
+    "nombreCorto": "D. Finanzas Imprescindibles Para la Toma de Decisiones"
+  },
+  {
+    "codigo": "DGAFMCC",
+    "nombre": "DIPLOMADO EN GESTIÓN DE ACTIVOS FÍSICOS Y MANTENIMIENTO CENTRADO EN CONFIABILIDAD",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Gestión de Activos Físicos y Mantenimiento Centrado en Confiabilidad"
+  },
+  {
+    "codigo": "DGTH",
+    "nombre": "DIPLOMADO EN GESTIÓN DE TALENTO HUMANO",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Gestión de Talento Humano"
+  },
+  {
+    "codigo": "DLOGIS",
+    "nombre": "DIPLOMADO EN LOGÍSTICA",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Logística"
+  },
+  {
+    "codigo": "DPRL",
+    "nombre": "DIPLOMADO EN PREVENCIÓN DE RIESGOS LABORALES",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "B",
+    "nombreCorto": "D. Prevención de Riesgos Laborales"
+  },
+  {
+    "codigo": "DURBAN",
+    "nombre": "DIPLOMADO EN URBANISMO",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Urbanismo"
+  },
+  {
+    "codigo": "SERDEPS",
+    "nombre": "SEMINARIO EN EVALUACIÓN RÁPIDA Y DETALLADA DE EDIFICACIONES POSTERIOR A UN SISMO",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "SEMINARIO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "S. Evaluación Rápida y Detallada de Edificaciones Posterior a un Sismo"
+  },
+  {
+    "codigo": "DPBI",
+    "nombre": "DIPLOMADO EN POWER BI",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Power BI"
+  },
+  {
+    "codigo": "DBD",
+    "nombre": "DIPLOMADO EN BIG DATA - GESTIÓN DE DATOS MASIVOS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Big Data - Gestión de Datos Masivos"
+  },
+  {
+    "codigo": "DCS",
+    "nombre": "DIPLOMADO EN CIBERSEGURIDAD",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Ciberseguridad"
+  },
+  {
+    "codigo": "SPAUTAS",
+    "nombre": "SEMINARIO EN BÁSICO DE PAUTAS METODOLÓGICAS Y DIDÁCTICAS EN LA MODALIDAD SEMIPRESENCIAL PARA PROFESIONALES QUE PRESTAN SUS SERVICIOS DE DOCENCIA A LA ESCUELA DE POSGRADO DE LA FIA",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "SEMINARIO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "C",
+    "nombreCorto": "S. Básico de Pautas Metodológicas y Didácticas en la Modalidad Semipresencial para Profesionales que prestan sus Servicios de Docencia a la Escuela de Posgrado de la FIA"
+  },
+  {
+    "codigo": "DICOPAR",
+    "nombre": "DIPLOMADO EN DISEÑO, CONSTRUCCIÓN Y CONSERVACIÓN DE PAVIMENTOS RÍGIDOS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Diseño, Construcción Y Conservación De Pavimentos Rígidos"
+  },
+  {
+    "codigo": "DBOMBEROS",
+    "nombre": "DIPLOMADO BOMBEROS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Bomberos"
+  },
+  {
+    "codigo": "DADO",
+    "nombre": "DIPLOMADO EN ANALÍTICA DE DATOS",
+    "registro": null,
+    "unidad": "EC",
+    "categoria": "DIPLOMADO",
+    "tipo": "DIPLOMADO",
+    "clasificacion": "A",
+    "nombreCorto": "D. Analítica de Datos"
+  }
+]

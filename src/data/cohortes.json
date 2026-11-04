@@ -1,0 +1,226 @@
+[
+  {
+    "programa": "MINGES",
+    "cohorte": 5,
+    "ciclo": "I",
+    "estudiantes": 23,
+    "anio": 2022
+  },
+  {
+    "programa": "MINGES",
+    "cohorte": 5,
+    "ciclo": "II",
+    "estudiantes": 10,
+    "anio": 2023
+  },
+  {
+    "programa": "MINGES",
+    "cohorte": 5,
+    "ciclo": "III",
+    "estudiantes": 9,
+    "anio": 2024
+  },
+  {
+    "programa": "MINGES",
+    "cohorte": 5,
+    "ciclo": "IV",
+    "estudiantes": null,
+    "anio": null
+  },
+  {
+    "programa": "MPRL",
+    "cohorte": 1,
+    "ciclo": "I",
+    "estudiantes": 22,
+    "anio": 2022
+  },
+  {
+    "programa": "MPRL",
+    "cohorte": 1,
+    "ciclo": "II",
+    "estudiantes": 21,
+    "anio": 2023
+  },
+  {
+    "programa": "MPRL",
+    "cohorte": 1,
+    "ciclo": "III",
+    "estudiantes": 21,
+    "anio": 2023
+  },
+  {
+    "programa": "MPRL",
+    "cohorte": 1,
+    "ciclo": "IV",
+    "estudiantes": 21,
+    "anio": 2024
+  },
+  {
+    "programa": "MIPIECC",
+    "cohorte": 1,
+    "ciclo": "I",
+    "estudiantes": 21,
+    "anio": 2021
+  },
+  {
+    "programa": "MIPIECC",
+    "cohorte": 1,
+    "ciclo": "II",
+    "estudiantes": 18,
+    "anio": 2022
+  },
+  {
+    "programa": "MIPIECC",
+    "cohorte": 1,
+    "ciclo": "III",
+    "estudiantes": 18,
+    "anio": 2023
+  },
+  {
+    "programa": "MIPIECC",
+    "cohorte": 1,
+    "ciclo": "IV",
+    "estudiantes": 18,
+    "anio": 2024
+  },
+  {
+    "programa": "MIPIET",
+    "cohorte": 1,
+    "ciclo": "I",
+    "estudiantes": 15,
+    "anio": 2021
+  },
+  {
+    "programa": "MIPIET",
+    "cohorte": 1,
+    "ciclo": "II",
+    "estudiantes": 14,
+    "anio": 2022
+  },
+  {
+    "programa": "MIPIET",
+    "cohorte": 1,
+    "ciclo": "III",
+    "estudiantes": 14,
+    "anio": 2023
+  },
+  {
+    "programa": "MIPIET",
+    "cohorte": 1,
+    "ciclo": "IV",
+    "estudiantes": 13,
+    "anio": 2024
+  },
+  {
+    "programa": "MERMA",
+    "cohorte": 6,
+    "ciclo": "I",
+    "estudiantes": 17,
+    "anio": 2022
+  },
+  {
+    "programa": "MERMA",
+    "cohorte": 6,
+    "ciclo": "II",
+    "estudiantes": 15,
+    "anio": 2023
+  },
+  {
+    "programa": "MERMA",
+    "cohorte": 6,
+    "ciclo": "III",
+    "estudiantes": 14,
+    "anio": 2023
+  },
+  {
+    "programa": "MERMA",
+    "cohorte": 6,
+    "ciclo": "IV",
+    "estudiantes": 14,
+    "anio": 2024
+  },
+  {
+    "programa": "MERMA",
+    "cohorte": 7,
+    "ciclo": "I",
+    "estudiantes": 12,
+    "anio": 2024
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 3,
+    "ciclo": "I",
+    "estudiantes": 26,
+    "anio": 2021
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 3,
+    "ciclo": "II",
+    "estudiantes": 25,
+    "anio": 2022
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 3,
+    "ciclo": "III",
+    "estudiantes": 25,
+    "anio": 2023
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 3,
+    "ciclo": "IV",
+    "estudiantes": 24,
+    "anio": 2024
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 4,
+    "ciclo": "I",
+    "estudiantes": 19,
+    "anio": 2023
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 4,
+    "ciclo": "II",
+    "estudiantes": 17,
+    "anio": 2023
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 4,
+    "ciclo": "III",
+    "estudiantes": 15,
+    "anio": 2024
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 4,
+    "ciclo": "IV",
+    "estudiantes": null,
+    "anio": null
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 5,
+    "ciclo": "I",
+    "estudiantes": 21,
+    "anio": 2024
+  },
+  {
+    "programa": "MAFEGIP",
+    "cohorte": 5,
+    "ciclo": "II",
+    "estudiantes": 15,
+    "anio": 2024
+  },
+  {
+    "programa": "MIPIECC",
+    "cohorte": 2,
+    "ciclo": "I",
+    "estudiantes": 11,
+    "anio": 2024
+  }
+]
