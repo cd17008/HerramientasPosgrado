@@ -35,7 +35,7 @@ import {
   getProgramas, getProgramaPorNombre, getAsignaturasPorPrograma,
   getDocentes, getDocentePorNombre, getCategoriasDocente, getTasaPorCategoria,
   getNacionalidades, getGrados, getClasificaciones, getEdiciones,
-  getCohortesPorPrograma, sugerirFactorSobrecupo
+  getCohortesPorPrograma, getTiposContratoEP, sugerirFactorSobrecupo
 } from './services/catalogService';
 
 import { generarCorreoWord } from './services/word/buildCorreoWordService';
@@ -79,6 +79,41 @@ export default function DocenteScheduleTool() {
   const [seleccionadasResumen, setSeleccionadasResumen] = useState(['asig-1', 'asig-2']);
   const [diasFiltro, setDiasFiltro] = useState([]);
   const currentAsig = asignaciones.find((a) => a.id === asignacionSeleccionadaId) || asignaciones[0] || null;
+
+  const programasCatalogo = getProgramas();
+  const docentesCatalogo = getDocentes();
+  const opcionesCargo = ['DOCENTE DE MAESTRIA', 'DOCENTE DE DIPLOMADO', 'COORDINADOR DE MAESTRIA', 'COORDINADOR DE DIPLOMADO'];
+  const ciclosCatalogo = ['I', 'II', 'III', 'IV'];
+  const renderInputConSugerencias = (id, value, options, onChange, className, props = {}) => (
+    <>
+      <input {...props} type="text" list={id} value={value ?? ''} onChange={(e) => onChange(e.target.value)} className={className} />
+      <datalist id={id}>
+        {options.filter(Boolean).map((opcion) => {
+          const valor = typeof opcion === 'string' ? opcion : opcion.value;
+          const etiqueta = typeof opcion === 'string' ? opcion : opcion.label;
+          return <option key={valor} value={valor}>{etiqueta !== valor ? etiqueta : undefined}</option>;
+        })}
+      </datalist>
+    </>
+  );
+
+  const actualizarDocenteSeleccionado = (nombreCompleto) => {
+    const docente = getDocentePorNombre(nombreCompleto);
+    setDocenteNombre(nombreCompleto);
+    if (!docente) return;
+    setRequerimientoForm((prev) => prev ? ({
+      ...prev,
+      docenteInfo: {
+        ...prev.docenteInfo,
+        nombreCompleto,
+        profesion: docente.profesion || prev.docenteInfo.profesion,
+        nacionalidad: docente.nacionalidad || prev.docenteInfo.nacionalidad,
+        correo: docente.correo || prev.docenteInfo.correo,
+        calificacionDocente: docente.categoria || prev.docenteInfo.calificacionDocente,
+        pagoPorHora: docente.tasaHora || prev.docenteInfo.pagoPorHora
+      }
+    }) : prev);
+  };
 
 
   useEffect(() => {
@@ -649,13 +684,7 @@ export default function DocenteScheduleTool() {
 
           <div className="border-l border-slate-200 pl-3">
             <label className="block text-[11px] text-slate-500 font-medium">Docente Asignado</label>
-            <input
-              type="text"
-              placeholder="Nombre del docente..."
-              value={docenteNombre}
-              onChange={(e) => setDocenteNombre(e.target.value)}
-              className="text-xs font-semibold text-slate-900 bg-white border border-slate-300 rounded px-2.5 py-1 focus:ring-1 focus:ring-slate-500 focus:outline-none w-56"
-            />
+            {renderInputConSugerencias('docentes-asignados', docenteNombre, docentesCatalogo.map((docente) => docente.nombre), setDocenteNombre, 'text-xs font-semibold text-slate-900 bg-white border border-slate-300 rounded px-2.5 py-1 focus:ring-1 focus:ring-slate-500 focus:outline-none w-56', { placeholder: 'Nombre del docente...' })}
           </div>
 
           <div className="border-l border-slate-200 pl-3">
@@ -1255,54 +1284,27 @@ export default function DocenteScheduleTool() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <label className="block font-semibold text-slate-700 mb-1">Nombre del Programa Académico</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej. MAESTRÍA EN ENERGÍAS RENOVABLES"
-                    value={formAsignacion.programaNombre}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, programaNombre: e.target.value })}
-                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
-                  />
+                  {renderInputConSugerencias('programas-asignacion', formAsignacion.programaNombre, programasCatalogo.map((programa) => ({ value: programa.nombre, label: `${programa.nombre} (${programa.codigo})` })), (nombre) => {
+                    const programa = programasCatalogo.find((p) => p.nombre === nombre);
+                    setFormAsignacion({ ...formAsignacion, programaNombre: nombre, programaTipo: programa?.tipo || formAsignacion.programaTipo, materia: '' });
+                  }, 'w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none', { required: true, placeholder: 'Selecciona o escribe un programa...' })}
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Tipo de Programa</label>
-                  <select
-                    value={formAsignacion.programaTipo}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, programaTipo: e.target.value })}
-                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer"
-                  >
-                    <option value="MAESTRIA">Maestría / Doctorado</option>
-                    <option value="DIPLOMADO">Diplomado / Curso</option>
-                  </select>
+                  {renderInputConSugerencias('tipos-programa', formAsignacion.programaTipo, [{ value: 'MAESTRIA', label: 'Maestría / Doctorado' }, { value: 'DIPLOMADO', label: 'Diplomado / Curso' }], (programaTipo) => setFormAsignacion({ ...formAsignacion, programaTipo, programaNombre: '', materia: '' }), 'w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none', { placeholder: 'Tipo de programa...' })}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Cargo a Desempeñar</label>
-                  <select
-                    value={formAsignacion.cargo}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, cargo: e.target.value })}
-                    className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer font-medium"
-                  >
-                    <option value="DOCENTE DE MAESTRIA">DOCENTE DE MAESTRÍA</option>
-                    <option value="DOCENTE DE DIPLOMADO">DOCENTE DE DIPLOMADO</option>
-                    <option value="COORDINADOR DE MAESTRIA">COORDINADOR DE MAESTRÍA</option>
-                    <option value="COORDINADOR DE DIPLOMADO">COORDINADOR DE DIPLOMADO</option>
-                  </select>
+                  {renderInputConSugerencias('cargos-docente', formAsignacion.cargo, opcionesCargo, (cargo) => setFormAsignacion({ ...formAsignacion, cargo }), 'w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none font-medium', { placeholder: 'Selecciona o escribe el cargo...' })}
                 </div>
 
                 {!formAsignacion.cargo?.toUpperCase().includes('COORDINAD') ? (
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nombre de la Asignatura / Módulo</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej. Celdas de Combustible"
-                      value={formAsignacion.materia}
-                      onChange={(e) => setFormAsignacion({ ...formAsignacion, materia: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
-                    />
+                    {renderInputConSugerencias('asignaturas-asignacion', formAsignacion.materia, getAsignaturasPorPrograma(programasCatalogo.find((p) => p.nombre === formAsignacion.programaNombre)?.codigo).map((asignatura) => ({ value: asignatura.nombre, label: `${asignatura.nombre} (${asignatura.codigo})` })), (materia) => setFormAsignacion({ ...formAsignacion, materia }), 'w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none', { required: true, placeholder: 'Selecciona o escribe una asignatura...' })}
                   </div>
                 ) : (
                   <div className="flex items-center pt-5 text-indigo-700 text-xs italic">
@@ -1536,46 +1538,15 @@ export default function DocenteScheduleTool() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nombre Completo</label>
-                    <input
-                      type="text"
-                      required
-                      value={requerimientoForm.docenteInfo.nombreCompleto}
-                      onChange={(e) =>
-                        setRequerimientoForm({
-                          ...requerimientoForm,
-                          docenteInfo: { ...requerimientoForm.docenteInfo, nombreCompleto: e.target.value }
-                        })
-                      }
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
-                    />
+                    {renderInputConSugerencias('docentes-requerimiento', requerimientoForm.docenteInfo.nombreCompleto, docentesCatalogo.map((docente) => docente.nombre), actualizarDocenteSeleccionado, 'w-full border border-slate-300 rounded p-1.5 bg-white', { required: true, placeholder: 'Selecciona o escribe el nombre...' })}
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Profesión</label>
-                    <input
-                      type="text"
-                      value={requerimientoForm.docenteInfo.profesion}
-                      onChange={(e) =>
-                        setRequerimientoForm({
-                          ...requerimientoForm,
-                          docenteInfo: { ...requerimientoForm.docenteInfo, profesion: e.target.value }
-                        })
-                      }
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
-                    />
+                    {renderInputConSugerencias('grados-profesion', requerimientoForm.docenteInfo.profesion, getGrados(), (profesion) => setRequerimientoForm({ ...requerimientoForm, docenteInfo: { ...requerimientoForm.docenteInfo, profesion } }), 'w-full border border-slate-300 rounded p-1.5 bg-white', { placeholder: 'Selecciona o escribe una profesión...' })}
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nacionalidad</label>
-                    <input
-                      type="text"
-                      value={requerimientoForm.docenteInfo.nacionalidad}
-                      onChange={(e) =>
-                        setRequerimientoForm({
-                          ...requerimientoForm,
-                          docenteInfo: { ...requerimientoForm.docenteInfo, nacionalidad: e.target.value }
-                        })
-                      }
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
-                    />
+                    {renderInputConSugerencias('nacionalidades-docente', requerimientoForm.docenteInfo.nacionalidad, getNacionalidades(), (nacionalidad) => setRequerimientoForm({ ...requerimientoForm, docenteInfo: { ...requerimientoForm.docenteInfo, nacionalidad } }), 'w-full border border-slate-300 rounded p-1.5 bg-white', { placeholder: 'Selecciona o escribe una nacionalidad...' })}
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Correo Electrónico</label>
@@ -1595,14 +1566,10 @@ export default function DocenteScheduleTool() {
                   {/* Listas Desplegables Condicionales */}
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Tipo de Contrato</label>
-                    <select
-                      value={requerimientoForm.docenteInfo.tipoContrato}
-                      onChange={(e) => {
-                        const nuevoContrato = e.target.value;
+                    {renderInputConSugerencias('tipos-contrato', requerimientoForm.docenteInfo.tipoContrato, [...new Set(getTiposContratoEP().map((tipo) => tipo.tipoContrato))], (nuevoContrato) => {
                         const nuevaContratacion = nuevoContrato === 'SERVICIOS PERSONALES'
                           ? 'TIEMPO ADICIONAL'
                           : 'TIEMPO NORMAL';
-
                         setRequerimientoForm({
                           ...requerimientoForm,
                           docenteInfo: {
@@ -1611,51 +1578,17 @@ export default function DocenteScheduleTool() {
                             tipoContratacion: nuevaContratacion
                           }
                         });
-                      }}
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs cursor-pointer focus:ring-1 focus:ring-slate-800 focus:outline-none"
-                    >
-                      <option value="SERVICIOS PROFESIONALES NO PERSONALES">SERVICIOS PROFESIONALES NO PERSONALES</option>
-                      <option value="SERVICIOS PERSONALES">SERVICIOS PERSONALES</option>
-                      <option value="AD HONOREM">AD HONOREM</option>
-                    </select>
+                      }, 'w-full border border-slate-300 rounded p-1.5 bg-white text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none', { placeholder: 'Selecciona o escribe tipo de contrato...' })}
                   </div>
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Tipo de Contratación</label>
-                    <select
-                      value={requerimientoForm.docenteInfo.tipoContratacion}
-                      onChange={(e) =>
-                        setRequerimientoForm({
-                          ...requerimientoForm,
-                          docenteInfo: { ...requerimientoForm.docenteInfo, tipoContratacion: e.target.value }
-                        })
-                      }
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white text-xs cursor-pointer focus:ring-1 focus:ring-slate-800 focus:outline-none"
-                    >
-                      {requerimientoForm.docenteInfo.tipoContrato === 'SERVICIOS PERSONALES' ? (
-                        <>
-                          <option value="TIEMPO ADICIONAL">TIEMPO ADICIONAL</option>
-                          <option value="TIEMPO INTEGRAL">TIEMPO INTEGRAL</option>
-                        </>
-                      ) : (
-                        <option value="TIEMPO NORMAL">TIEMPO NORMAL</option>
-                      )}
-                    </select>
+                    {renderInputConSugerencias('tipos-contratacion', requerimientoForm.docenteInfo.tipoContratacion, [...new Set(getTiposContratoEP().map((tipo) => tipo.tipoContratacion))], (tipoContratacion) => setRequerimientoForm({ ...requerimientoForm, docenteInfo: { ...requerimientoForm.docenteInfo, tipoContratacion } }), 'w-full border border-slate-300 rounded p-1.5 bg-white text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none', { placeholder: 'Selecciona o escribe tipo...' })}
                   </div>
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Modalidad de Servicio</label>
-                    <input
-                      type="text"
-                      value={requerimientoForm.docenteInfo.modalidadServicio}
-                      onChange={(e) =>
-                        setRequerimientoForm({
-                          ...requerimientoForm,
-                          docenteInfo: { ...requerimientoForm.docenteInfo, modalidadServicio: e.target.value }
-                        })
-                      }
-                      className="w-full border border-slate-300 rounded p-1.5 bg-white"
-                    />
+                    {renderInputConSugerencias('modalidades-servicio', requerimientoForm.docenteInfo.modalidadServicio, ['EN LINEA', 'PRESENCIAL'], (modalidadServicio) => setRequerimientoForm({ ...requerimientoForm, docenteInfo: { ...requerimientoForm.docenteInfo, modalidadServicio } }), 'w-full border border-slate-300 rounded p-1.5 bg-white', { placeholder: 'Selecciona o escribe una modalidad...' })}
                   </div>
 
                   {/* Si es Tiempo Integral se piden sueldo, porcentaje y meses; si no, calificación y pago por hora */}
@@ -1710,20 +1643,7 @@ export default function DocenteScheduleTool() {
                     <>
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Calificación Docente</label>
-                        <select
-                          value={requerimientoForm.docenteInfo.calificacionDocente}
-                          onChange={(e) =>
-                            setRequerimientoForm({
-                              ...requerimientoForm,
-                              docenteInfo: { ...requerimientoForm.docenteInfo, calificacionDocente: e.target.value }
-                            })
-                          }
-                          className="w-full border border-slate-300 rounded p-1.5 bg-white cursor-pointer font-bold"
-                        >
-                          {['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'].map((f) => (
-                            <option key={f} value={f}>{f}</option>
-                          ))}
-                        </select>
+                        {renderInputConSugerencias('categorias-docente', requerimientoForm.docenteInfo.calificacionDocente, getCategoriasDocente().map((categoria) => categoria.id), (calificacionDocente) => setRequerimientoForm({ ...requerimientoForm, docenteInfo: { ...requerimientoForm.docenteInfo, calificacionDocente } }), 'w-full border border-slate-300 rounded p-1.5 bg-white font-bold', { placeholder: 'Categoría...' })}
                       </div>
 
                       <div>
@@ -1769,31 +1689,19 @@ export default function DocenteScheduleTool() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                           <label className="block font-medium text-slate-600 mb-1">Edición / Cohorte</label>
-                          <input
-                            type="text"
-                            value={prog.edicionCohorte}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const nuevosProgs = [...requerimientoForm.programas];
-                              nuevosProgs[pIdx].edicionCohorte = val;
-                              setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                            }}
-                            className="w-full border border-slate-300 rounded p-1.5"
-                          />
+                          {renderInputConSugerencias(`ediciones-cohortes-${pIdx}`, prog.edicionCohorte, esDip ? getEdiciones().map((e) => e.etiqueta) : getCohortesPorPrograma(programasCatalogo.find((p) => p.nombre === prog.nombre)?.codigo).map((n) => `${n}° COHORTE`), (val) => {
+                            const nuevosProgs = [...requerimientoForm.programas];
+                            nuevosProgs[pIdx].edicionCohorte = val;
+                            setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                          }, 'w-full border border-slate-300 rounded p-1.5', { placeholder: 'Selecciona o escribe edición/cohorte...' })}
                         </div>
                         <div>
                           <label className="block font-medium text-slate-600 mb-1">Coordinador del Programa</label>
-                          <input
-                            type="text"
-                            value={prog.coordinador}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const nuevosProgs = [...requerimientoForm.programas];
-                              nuevosProgs[pIdx].coordinador = val;
-                              setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                            }}
-                            className="w-full border border-slate-300 rounded p-1.5"
-                          />
+                          {renderInputConSugerencias(`coordinadores-${pIdx}`, prog.coordinador, docentesCatalogo.map((docente) => docente.nombre), (val) => {
+                            const nuevosProgs = [...requerimientoForm.programas];
+                            nuevosProgs[pIdx].coordinador = val;
+                            setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                          }, 'w-full border border-slate-300 rounded p-1.5', { placeholder: 'Selecciona o escribe coordinador...' })}
                         </div>
 
                         {/* Alumnos y Sobrecupo a nivel de Programa */}
@@ -1831,17 +1739,11 @@ export default function DocenteScheduleTool() {
                             </div>
                             <div>
                               <label className="block font-medium text-slate-600 mb-1">Clasificación del Proyecto</label>
-                              <input
-                                type="text"
-                                value={prog.clasificacionProyecto}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  const nuevosProgs = [...requerimientoForm.programas];
-                                  nuevosProgs[pIdx].clasificacionProyecto = val;
-                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                                }}
-                                className="w-full border border-slate-300 rounded p-1.5"
-                              />
+                              {renderInputConSugerencias(`clasificaciones-${pIdx}`, prog.clasificacionProyecto, getClasificaciones(), (val) => {
+                                const nuevosProgs = [...requerimientoForm.programas];
+                                nuevosProgs[pIdx].clasificacionProyecto = val;
+                                setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                              }, 'w-full border border-slate-300 rounded p-1.5', { placeholder: 'Clasificación...' })}
                             </div>
                           </>
                         )}
@@ -1870,36 +1772,24 @@ export default function DocenteScheduleTool() {
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
                                 <div>
                                   <label className="block text-[10px] text-slate-600 mb-0.5">Cargo</label>
-                                  <input
-                                    type="text"
-                                    value={asig.cargo}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
+                                  {renderInputConSugerencias(`cargos-asignacion-${pIdx}-${aIdx}`, asig.cargo, opcionesCargo, (val) => {
                                       const nuevosProgs = [...requerimientoForm.programas];
                                       nuevosProgs[pIdx].asignaciones[aIdx].cargo = val;
                                       if (val.toUpperCase().includes('COORDINAD')) {
                                         nuevosProgs[pIdx].asignaciones[aIdx].funciones = FUNCION_COORDINADOR_DEFAULT;
                                       }
                                       setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                                    }}
-                                    className="w-full border border-slate-300 rounded p-1 bg-white"
-                                  />
+                                    }, 'w-full border border-slate-300 rounded p-1 bg-white', { placeholder: 'Selecciona o escribe cargo...' })}
                                 </div>
 
                                 {!esCoord ? (
                                   <div>
                                     <label className="block text-[10px] text-slate-600 mb-0.5">Asignatura</label>
-                                    <input
-                                      type="text"
-                                      value={asig.asignatura}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
+                                    {renderInputConSugerencias(`asignaturas-requerimiento-${pIdx}-${aIdx}`, asig.asignatura, getAsignaturasPorPrograma(programasCatalogo.find((p) => p.nombre === prog.nombre)?.codigo).map((asignatura) => asignatura.nombre), (val) => {
                                         const nuevosProgs = [...requerimientoForm.programas];
                                         nuevosProgs[pIdx].asignaciones[aIdx].asignatura = val;
                                         setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                                      }}
-                                      className="w-full border border-slate-300 rounded p-1 bg-white"
-                                    />
+                                      }, 'w-full border border-slate-300 rounded p-1 bg-white', { placeholder: 'Selecciona o escribe asignatura...' })}
                                   </div>
                                 ) : (
                                   <div className="flex items-center pt-3 text-[11px] text-indigo-700 italic">
@@ -1909,17 +1799,11 @@ export default function DocenteScheduleTool() {
 
                                 <div>
                                   <label className="block text-[10px] text-slate-600 mb-0.5">Módulo / Ciclo</label>
-                                  <input
-                                    type="text"
-                                    value={asig.moduloCiclo}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
+                                  {renderInputConSugerencias(`ciclos-requerimiento-${pIdx}-${aIdx}`, asig.moduloCiclo, ciclosCatalogo.map((ciclo) => `CICLO ${ciclo}`), (val) => {
                                       const nuevosProgs = [...requerimientoForm.programas];
                                       nuevosProgs[pIdx].asignaciones[aIdx].moduloCiclo = val;
                                       setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                                    }}
-                                    className="w-full border border-slate-300 rounded p-1 bg-white"
-                                  />
+                                    }, 'w-full border border-slate-300 rounded p-1 bg-white', { placeholder: 'Selecciona o escribe módulo/ciclo...' })}
                                 </div>
 
                                 <div>
