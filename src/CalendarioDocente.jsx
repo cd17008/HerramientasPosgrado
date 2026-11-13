@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import toast, {Toaster} from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
 import {
   DIAS_SEMANA,
@@ -82,10 +82,10 @@ export default function DocenteScheduleTool() {
 
 
   useEffect(() => {
-    if(currentAsig?.dias) {
+    if (currentAsig?.dias) {
       const diasActivos = DIAS_SEMANA
-      .filter((d)=>currentAsig.dias[d.id]?.activo)
-      .map((d)=>d.id);
+        .filter((d) => currentAsig.dias[d.id]?.activo)
+        .map((d) => d.id);
       setDiasFiltro(diasActivos);
     }
   }, [asignacionSeleccionadaId]);
@@ -100,7 +100,7 @@ export default function DocenteScheduleTool() {
     mensaje: '',
     textoBoton: 'Confirmar',
     tipo: 'peligro', // 'peligro' | 'info'
-    onConfirmar: () => {}
+    onConfirmar: () => { }
   });
 
   const abrirConfirmacion = ({ titulo, mensaje, textoBoton = 'Confirmar', tipo = 'peligro', onConfirmar }) => {
@@ -348,7 +348,7 @@ export default function DocenteScheduleTool() {
         0: { activo: false, horaInicio: '08:00', horaFin: '12:00' }
       }
     });
-    
+
     setModalAsignacionAbierto(true);
   };
 
@@ -368,29 +368,29 @@ export default function DocenteScheduleTool() {
   };
 
   const handleGuardarAsignacion = (e) => {
-  e.preventDefault();
-  const esCoord = esCargoCoordinador(formAsignacion.cargo);
-  if (!formAsignacion.programaNombre.trim() || (!esCoord && !formAsignacion.materia.trim())) {
+    e.preventDefault();
+    const esCoord = esCargoCoordinador(formAsignacion.cargo);
+    if (!formAsignacion.programaNombre.trim() || (!esCoord && !formAsignacion.materia.trim())) {
       toast.error('Por favor completa los campos requeridos de la asignación.');
       return;
-  }
+    }
 
-  const payload = {
-    ...formAsignacion,
-    materia: esCoord ? `Coordinación Académica - ${formAsignacion.programaNombre}` : formAsignacion.materia
+    const payload = {
+      ...formAsignacion,
+      materia: esCoord ? `Coordinación Académica - ${formAsignacion.programaNombre}` : formAsignacion.materia
+    };
+
+    if (modoEdicion) {
+      setAsignaciones((prev) => prev.map((a) => (a.id === payload.id ? { ...a, ...payload } : a)));
+    } else {
+      const nueva = { ...payload, excepciones: {} };
+      setAsignaciones((prev) => [...prev, nueva]);
+      setAsignacionSeleccionadaId(nueva.id);
+      setSeleccionadasResumen((prev) => [...prev, nueva.id]);
+    }
+    toast.success(modoEdicion ? 'Asignación actualizada' : 'Asignación creada exitosamente');
+    setModalAsignacionAbierto(false);
   };
-
-  if (modoEdicion) {
-    setAsignaciones((prev) => prev.map((a) => (a.id === payload.id ? { ...a, ...payload } : a)));
-  } else {
-    const nueva = { ...payload, excepciones: {} };
-    setAsignaciones((prev) => [...prev, nueva]);
-    setAsignacionSeleccionadaId(nueva.id);
-    setSeleccionadasResumen((prev) => [...prev, nueva.id]);
-  }
-  toast.success(modoEdicion ? 'Asignación actualizada' : 'Asignación creada exitosamente');
-  setModalAsignacionAbierto(false);
-};
 
   const handleEliminarAsignacion = (idAEliminar) => {
     abrirConfirmacion({
@@ -414,7 +414,7 @@ export default function DocenteScheduleTool() {
   const descargarRespaldoJSON = (datosPersonalizados = null) => {
     const payload = datosPersonalizados || {
       docenteNombre,
-      asignaciones, 
+      asignaciones,
       seleccionadasResumen,
       fechaExportacion: new Date().toISOString()
     };
@@ -497,15 +497,14 @@ export default function DocenteScheduleTool() {
       if (!mapaProgramas[pNombre]) {
         mapaProgramas[pNombre] = {
           nombre: pNombre,
-          tipo: asig.programaTipo || 'MAESTRIA',
-          solicitudAprobacion: '',
-          acuerdoAprobacion: '',
+          tipo: asig.programaTipo || (esDip ? 'DIPLOMADO' : 'MAESTRIA'),
+          solicitudAprobacion: asig.numeroSolicitud || '',
+          acuerdoImparticion: asig.numeroAprobacion || '',
           edicionCohorte: esDip ? 'EDICION II 2026' : '7° COHORTE',
-          coordinador: esDip ? 'MSC. VIRGILIO REYES' : 'MSC. JORGE ALBERTO ZETINO CHICAS',
+          coordinador: '',
           clasificacionProyecto: 'A',
-          // Alumnos y factor se controlan ahora a nivel de programa
-          alumnosInscritos: esDip ? 46 : 10,
-          factorSobrecupo: 1.25,
+          alumnosInscritos: 0,
+          factorSobrecupo: 1.0,
           asignaciones: []
         };
       }
@@ -630,6 +629,14 @@ export default function DocenteScheduleTool() {
         <div className="flex items-center gap-2.5">
           <button
             type="button"
+            onClick={handleAbrirModalRequerimiento}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+          >
+            <IconDownload className="w-3.5 h-3.5" />
+            Descargar Resumen Excel
+          </button>
+          <button
+            type="button"
             onClick={() => setModalCargarAbierto(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded text-xs font-semibold cursor-pointer transition-colors"
             title="Importar un archivo JSON previamente descargado"
@@ -712,11 +719,10 @@ export default function DocenteScheduleTool() {
                   <div
                     key={asig.id}
                     onClick={() => setAsignacionSeleccionadaId(asig.id)}
-                    className={`p-3 rounded border text-left cursor-pointer transition-colors ${
-                      esActiva
-                        ? 'border-slate-800 bg-slate-50 text-slate-900'
-                        : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-                    }`}
+                    className={`p-3 rounded border text-left cursor-pointer transition-colors ${esActiva
+                      ? 'border-slate-800 bg-slate-50 text-slate-900'
+                      : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                      }`}
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700">
@@ -789,33 +795,30 @@ export default function DocenteScheduleTool() {
             <button
               type="button"
               onClick={() => setActiveTab('calendario')}
-              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors ${
-                activeTab === 'calendario'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
+              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors ${activeTab === 'calendario'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
             >
               Fechas y Sesiones
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('metricas')}
-              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors ${
-                activeTab === 'metricas'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
+              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors ${activeTab === 'metricas'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
             >
               Resumen de Horas
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('choques')}
-              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors inline-flex items-center gap-1.5 ${
-                activeTab === 'choques'
-                  ? 'border-slate-900 text-slate-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
-              }`}
+              className={`pb-2.5 px-4 text-xs font-semibold cursor-pointer border-b-2 transition-colors inline-flex items-center gap-1.5 ${activeTab === 'choques'
+                ? 'border-slate-900 text-slate-900'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
             >
               <span>Auditoría de Choques</span>
               {cantidadChoquesTotales > 0 && (
@@ -889,18 +892,16 @@ export default function DocenteScheduleTool() {
                               : [...prev, dia.id]
                           );
                         }}
-                        className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${
-                          estaSeleccionado
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
-                        }`}
+                        className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${estaSeleccionado
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                          }`}
                       >
                         <span>{dia.nombre}</span>
                         {tieneAsignacion && (
                           <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
-                            }`}
+                            className={`w-1.5 h-1.5 rounded-full ${estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
+                              }`}
                             title="Tiene horario asignado"
                           />
                         )}
@@ -1009,15 +1010,15 @@ export default function DocenteScheduleTool() {
                           </tr>
                         );
                       })}
-                      {todasLasSesiones.filter(
+                    {todasLasSesiones.filter(
                       (s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId)
                     ).length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="py-8 text-center text-slate-400 italic">
-                          No hay sesiones programadas para los días seleccionados en el filtro.
-                        </td>
-                      </tr>
-                    )}
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                            No hay sesiones programadas para los días seleccionados en el filtro.
+                          </td>
+                        </tr>
+                      )}
                   </tbody>
                 </table>
               </div>
@@ -1037,15 +1038,6 @@ export default function DocenteScheduleTool() {
                       Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
                     </p>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleAbrirModalRequerimiento}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-sm"
-                  >
-                    <IconDownload className="w-3.5 h-3.5" />
-                    Descargar Resumen Excel
-                  </button>
                 </div>
 
                 <div className="overflow-x-auto border border-slate-200 rounded">
@@ -1343,9 +1335,8 @@ export default function DocenteScheduleTool() {
                     return (
                       <div
                         key={dia.id}
-                        className={`flex items-center justify-between p-2 rounded border transition-colors ${
-                          conf.activo ? 'bg-white border-slate-300' : 'bg-slate-100/50 border-slate-200 opacity-60'
-                        }`}
+                        className={`flex items-center justify-between p-2 rounded border transition-colors ${conf.activo ? 'bg-white border-slate-300' : 'bg-slate-100/50 border-slate-200 opacity-60'
+                          }`}
                       >
                         <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-800 w-28">
                           <input
@@ -1843,8 +1834,44 @@ export default function DocenteScheduleTool() {
                                 className="w-full border border-slate-300 rounded p-1.5"
                               />
                             </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                N° de Solicitud
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. SOL-045/2026"
+                                value={prog.solicitudAprobacion || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].solicitudAprobacion = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                N° de Acuerdo de Impartición
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. Acuerdo N° 120/2026-JD"
+                                value={prog.acuerdoImparticion || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].acuerdoImparticion = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+                            <div>
+                            </div>
                           </>
                         )}
+
                       </div>
 
                       {/* Asignaciones del programa */}
@@ -2027,11 +2054,10 @@ export default function DocenteScheduleTool() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
-                estaArrastrando
-                  ? 'border-indigo-600 bg-indigo-50/60 scale-[1.01]'
-                  : 'border-slate-300 hover:border-slate-400 bg-slate-50/50 hover:bg-slate-50'
-              }`}
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${estaArrastrando
+                ? 'border-indigo-600 bg-indigo-50/60 scale-[1.01]'
+                : 'border-slate-300 hover:border-slate-400 bg-slate-50/50 hover:bg-slate-50'
+                }`}
             >
               <div className="flex flex-col items-center justify-center space-y-3">
                 <div className={`p-3 rounded-full ${estaArrastrando ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'}`}>
@@ -2100,9 +2126,8 @@ export default function DocenteScheduleTool() {
           <div className="bg-white border border-slate-300 rounded-lg max-w-sm w-full p-5 space-y-4 shadow-xl animate-in fade-in zoom-in-95 duration-100">
             <div className="flex items-start gap-3">
               <div
-                className={`p-2 rounded-full shrink-0 ${
-                  modalConfirmacion.tipo === 'peligro' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-700'
-                }`}
+                className={`p-2 rounded-full shrink-0 ${modalConfirmacion.tipo === 'peligro' ? 'bg-rose-100 text-rose-600' : 'bg-slate-100 text-slate-700'
+                  }`}
               >
                 <IconAlert className="w-5 h-5" />
               </div>
@@ -2123,11 +2148,10 @@ export default function DocenteScheduleTool() {
               <button
                 type="button"
                 onClick={modalConfirmacion.onConfirmar}
-                className={`px-3.5 py-1.5 rounded text-xs font-semibold text-white cursor-pointer transition-colors shadow-sm ${
-                  modalConfirmacion.tipo === 'peligro'
-                    ? 'bg-rose-600 hover:bg-rose-700'
-                    : 'bg-slate-900 hover:bg-slate-800'
-                }`}
+                className={`px-3.5 py-1.5 rounded text-xs font-semibold text-white cursor-pointer transition-colors shadow-sm ${modalConfirmacion.tipo === 'peligro'
+                  ? 'bg-rose-600 hover:bg-rose-700'
+                  : 'bg-slate-900 hover:bg-slate-800'
+                  }`}
               >
                 {modalConfirmacion.textoBoton}
               </button>
