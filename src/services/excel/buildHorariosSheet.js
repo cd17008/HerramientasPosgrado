@@ -46,7 +46,22 @@ const EXCEL_STYLES = {
   })
 };
 
+const obtenerTituloAsignacion = (item) => {
+  const idProg = (item.codigoPrograma || item.programaCodigo || item.programaNombre || item.programa || '')
+    .trim()
+    .toUpperCase();
+  const mod = (item.moduloCiclo || '').trim().toUpperCase();
+  if (idProg && mod) return `${idProg} - ${mod}`;
+  if (idProg) return idProg;
+  return item.materia || '';
+};
+
 export function buildHorariosSheet({ asignaciones, sesiones }) {
+  const mapaTitulosPorId = new Map();
+  asignaciones.forEach((asig) => {
+    mapaTitulosPorId.set(asig.id, obtenerTituloAsignacion(asig));
+  });
+
   const leftRows = [
     ['Día', 'Fecha', 'N° Horas', 'Mes', 'Asignación']
   ];
@@ -64,8 +79,9 @@ export function buildHorariosSheet({ asignaciones, sesiones }) {
     const fechaObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1);
     const mesStr = fechaObj.toLocaleString('es-ES', { month: 'long' });
     const mesLimpio = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
+    const tituloAsignacion = mapaTitulosPorId.get(s.asignacionId) || obtenerTituloAsignacion(s);
 
-    leftRows.push([s.nombreDia, numeroDia, s.duracionHoras, mesLimpio, s.materia]);
+    leftRows.push([s.nombreDia, numeroDia, s.duracionHoras, mesLimpio, tituloAsignacion]);
   });
 
   leftRows.push(['', 'TOTAL', sumaTotalHoras, 'horas', '']);
@@ -79,7 +95,7 @@ export function buildHorariosSheet({ asignaciones, sesiones }) {
       rightMeta.push('empty');
     }
 
-    rightRows.push([asig.materia, '']);
+    rightRows.push([obtenerTituloAsignacion(asig), '']);
     rightMeta.push('title');
 
     rightRows.push(['Día', 'Horario']);

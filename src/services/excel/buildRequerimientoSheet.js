@@ -140,8 +140,8 @@ function calcularDesgloseAsignacion({ prog, asig, docenteInfo }) {
 
 
   const horasSobrecupo = Number(asig.cantidadHoras) || 0;
-    const horasPAE = esDiplomado && !esCoordinador
-    ? Math.round(horasSobrecupo /factorProg * 100) / 100
+  const horasPAE = esDiplomado && !esCoordinador
+    ? Math.round(horasSobrecupo / factorProg * 100) / 100
     : 0;
 
   const horasFacturables = esDiplomado && !esCoordinador ? horasSobrecupo : horasPAE;
@@ -286,7 +286,10 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
       const { subtotal } = calcularDesgloseAsignacion({ prog, asig, docenteInfo });
       totalMontoGeneral = Math.round((totalMontoGeneral + subtotal) * 100) / 100;
 
-      const labelResumen = `PROGRAMA ${pIdx + 1} - ASIGNACION ${aIdx + 1}`;
+      const idProg = (prog.codigo || prog.nombre || '').trim().toUpperCase();
+      const modCiclo = (asig.moduloCiclo || '').trim().toUpperCase();
+      const labelResumen = modCiclo ? `${idProg} - ${modCiclo}` : idProg;
+
       setCell(resumenRow, 4, labelResumen, STYLES.resumenLabel);
       setCell(resumenRow, 5, subtotal, STYLES.resumenValue, true);
       resumenRow++;
@@ -312,6 +315,7 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
 
     const filasPrograma = [
       ['PROGRAMA', (prog.nombre || '').toUpperCase()],
+      ['CÓDIGO DEL PROGRAMA', (prog.codigo || '').toUpperCase()],
       ['N° DE SOLICITUD', (prog.solicitudAprobacion || '').toUpperCase()],
       ['ACUERDO DE IMPARTICIÓN', (prog.acuerdoImparticion || prog.acuerdoAprobacion || '').toUpperCase()],
       ['EDICIÓN/COHORTE', (prog.edicionCohorte || '').toUpperCase()],

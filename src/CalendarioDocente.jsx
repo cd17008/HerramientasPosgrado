@@ -323,6 +323,7 @@ export default function DocenteScheduleTool() {
         setAsignaciones([]);
         setAsignacionSeleccionadaId(null);
         setSeleccionadasResumen([]);
+        setRequerimientoForm(null);
         toast.success('Se han limpiado todas las asignaciones.');
       }
     });
@@ -414,6 +415,9 @@ export default function DocenteScheduleTool() {
   const descargarRespaldoJSON = (datosPersonalizados = null) => {
     const payload = datosPersonalizados || {
       docenteNombre,
+      docenteInfo: requerimientoForm?.docenteInfo || null,
+      programas: requerimientoForm?.programas || [],
+      requerimientoForm,
       asignaciones,
       seleccionadasResumen,
       fechaExportacion: new Date().toISOString()
@@ -444,6 +448,16 @@ export default function DocenteScheduleTool() {
       try {
         const datos = JSON.parse(event.target.result);
         if (datos.docenteNombre !== undefined) setDocenteNombre(datos.docenteNombre);
+
+        if (datos.requerimientoForm) {
+          setRequerimientoForm(datos.requerimientoForm);
+        } else if (datos.docenteInfo || Array.isArray(datos.programas)) {
+          setRequerimientoForm({
+            docenteInfo: datos.docenteInfo || {},
+            programas: datos.programas || []
+          });
+        }
+
         if (Array.isArray(datos.asignaciones)) {
           setAsignaciones(datos.asignaciones);
           if (datos.asignaciones.length > 0) {
@@ -497,6 +511,7 @@ export default function DocenteScheduleTool() {
       if (!mapaProgramas[pNombre]) {
         mapaProgramas[pNombre] = {
           nombre: pNombre,
+          codigo: asig.programaCodigo || '',
           tipo: asig.programaTipo || (esDip ? 'DIPLOMADO' : 'MAESTRIA'),
           solicitudAprobacion: asig.numeroSolicitud || '',
           acuerdoImparticion: asig.numeroAprobacion || '',
@@ -525,25 +540,62 @@ export default function DocenteScheduleTool() {
       });
     });
 
+    const prevForm = requerimientoForm;
+    const prevDocente = prevForm?.docenteInfo || {};
+    const prevProgramasMap = new Map(
+      (prevForm?.programas || []).map((p) => [p.nombre, p])
+    );
+
+    const programasActualizados = Object.values(mapaProgramas).map((progNuevo) => {
+      const progPrevio = prevProgramasMap.get(progNuevo.nombre);
+      if (!progPrevio) return progNuevo;
+
+      const prevAsigsMap = new Map(
+        (progPrevio.asignaciones || []).map((a) => [a.asigId || a.id, a])
+      );
+
+      return {
+        ...progNuevo,
+        codigo: progPrevio.codigo ?? progNuevo.codigo,
+        solicitudAprobacion: progPrevio.solicitudAprobacion ?? progNuevo.solicitudAprobacion,
+        acuerdoImparticion: progPrevio.acuerdoImparticion ?? progNuevo.acuerdoImparticion,
+        edicionCohorte: progPrevio.edicionCohorte ?? progNuevo.edicionCohorte,
+        coordinador: progPrevio.coordinador ?? progNuevo.coordinador,
+        clasificacionProyecto: progPrevio.clasificacionProyecto ?? progNuevo.clasificacionProyecto,
+        alumnosInscritos: progPrevio.alumnosInscritos ?? progNuevo.alumnosInscritos,
+        factorSobrecupo: progPrevio.factorSobrecupo ?? progNuevo.factorSobrecupo,
+        asignaciones: progNuevo.asignaciones.map((asigNueva) => {
+          const asigPrevia = prevAsigsMap.get(asigNueva.asigId || asigNueva.id);
+          if (!asigPrevia) return asigNueva;
+          return {
+            ...asigNueva,
+            cargo: asigPrevia.cargo ?? asigNueva.cargo,
+            funciones: asigPrevia.funciones ?? asigNueva.funciones,
+            moduloCiclo: asigPrevia.moduloCiclo ?? asigNueva.moduloCiclo,
+            pagoPorHora: asigPrevia.pagoPorHora ?? asigNueva.pagoPorHora
+          };
+        })
+      };
+    });
+
     setRequerimientoForm({
       docenteInfo: {
-        nombreCompleto: docenteNombre,
         tipoContrato: 'SERVICIOS PROFESIONALES NO PERSONALES',
         tipoContratacion: 'TIEMPO NORMAL',
-        profesion: 'DOCTOR',
-        nacionalidad: 'NICARAGUENSE',
-        correo: 'leonardo.mendoza@ues.edu.sv',
+        profesion: '',
+        nacionalidad: 'SALVADOREÑA',
+        correo: '',
         modalidadServicio: 'EN LINEA',
-        // Calificación docente y pago por hora van centralizados aquí
         calificacionDocente: 'F6',
         pagoPorHora: 22.50,
         sueldoNominal: 1200.00,
         porcentajePago: 13,
-        cantidadMeses: 1
+        cantidadMeses: 1,
+        ...prevDocente,
+        nombreCompleto: docenteNombre || prevDocente.nombreCompleto || ''
       },
-      programas: Object.values(mapaProgramas)
+      programas: programasActualizados
     });
-
     setModalRequerimientoAbierto(true);
   };
 
@@ -555,10 +607,27 @@ export default function DocenteScheduleTool() {
     const sesionesFiltradas = todasLasSesiones.filter((s) => seleccionadasResumen.includes(s.asignacionId));
 
     // 1. Descarga del Excel con las 2 hojas (Requerimiento + Horarios)
+    // Vincular el nombre del programa y módulo/ciclo editados en el modal con las asignaciones de horarios
+    const mapaModalPorAsigId = new Map();
+    requerimientoForm.programas.forEach((prog) => {
+      (prog.asignaciones || []).forEach((aModal) => {
+        mapaModalPorAsigId.set(aModal.asigId || aModal.idOriginal || aModal.id, {
+          programaNombre: prog.nombre,
+          codigoPrograma: prog.codigo,
+          moduloCiclo: aModal.moduloCiclo
+        });
+      });
+    });
+
+    const asignacionesEnriquecidas = asignacionesFiltradas.map((asig) => ({
+      ...asig,
+      ...(mapaModalPorAsigId.get(asig.id) || {})
+    }));
+
     generarExpedienteCompletoExcel({
       docenteInfo: requerimientoForm.docenteInfo,
       programas: requerimientoForm.programas,
-      asignacionesHorarios: asignacionesFiltradas,
+      asignacionesHorarios: asignacionesEnriquecidas,
       sesionesHorarios: sesionesFiltradas
     });
 
@@ -574,6 +643,7 @@ export default function DocenteScheduleTool() {
       docenteNombre,
       docenteInfo: requerimientoForm.docenteInfo,
       programas: requerimientoForm.programas,
+      requerimientoForm,
       asignaciones,
       seleccionadasResumen,
       fechaExportacion: new Date().toISOString()
@@ -1832,6 +1902,22 @@ export default function DocenteScheduleTool() {
                                   setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
                                 }}
                                 className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Código del Programa
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. DLOGIS / M10502"
+                                value={prog.codigo || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].codigo = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white uppercase focus:ring-1 focus:ring-indigo-600 focus:outline-none"
                               />
                             </div>
                             <div>
