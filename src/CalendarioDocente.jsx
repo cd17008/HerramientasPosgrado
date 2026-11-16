@@ -28,7 +28,8 @@ import {
   TriangleAlert as IconAlert,
   Check as IconCheck,
   Layers as IconLayers,
-  X as IconX
+  X as IconX,
+  List as IconList,
 } from 'lucide-react';
 
 import {
@@ -79,7 +80,7 @@ export default function DocenteScheduleTool() {
   const [seleccionadasResumen, setSeleccionadasResumen] = useState(['asig-1', 'asig-2']);
   const [diasFiltro, setDiasFiltro] = useState([]);
   const currentAsig = asignaciones.find((a) => a.id === asignacionSeleccionadaId) || asignaciones[0] || null;
-
+  const DIAS_CABECERA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
   useEffect(() => {
     if (currentAsig?.dias) {
@@ -88,7 +89,7 @@ export default function DocenteScheduleTool() {
         .map((d) => d.id);
       setDiasFiltro(diasActivos);
     }
-  }, [asignacionSeleccionadaId]);
+  }, [currentAsig?.id]);
 
   // Modales
   const [modalAsignacionAbierto, setModalAsignacionAbierto] = useState(false);
@@ -149,6 +150,7 @@ export default function DocenteScheduleTool() {
   const [requerimientoForm, setRequerimientoForm] = useState(null);
   const [modalCargarAbierto, setModalCargarAbierto] = useState(false);
   const [estaArrastrando, setEstaArrastrando] = useState(false);
+  const [vistaSesiones, setVistaSesiones] = useState('cuadricula');
 
   // Referencia de archivo para importar JSON
   const fileInputRef = useRef(null);
@@ -678,10 +680,78 @@ export default function DocenteScheduleTool() {
 
   const cantidadChoquesTotales = Object.keys(mapaDeChoques).length;
 
+  const mesesCalendario = useMemo(() => {
+    if (!currentAsig) return [];
+
+    const sesionesAsig = todasLasSesiones.filter(
+      (s) => s.asignacionId === currentAsig.id
+    );
+
+    // 1. Agrupar sesiones por clave 'YYYY-MM'
+    const grupos = {};
+    sesionesAsig.forEach((s) => {
+      const mesKey = s.fecha.substring(0, 7);
+      if (!grupos[mesKey]) grupos[mesKey] = [];
+      grupos[mesKey].push(s);
+    });
+
+    // 2. Construir la cuadrícula de celdas para cada mes
+    return Object.entries(grupos)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([mesKey, sesionesMes]) => {
+        const [year, month] = mesKey.split('-').map(Number);
+        const primerDiaMes = new Date(year, month - 1, 1);
+        const totalDiasMes = new Date(year, month, 0).getDate();
+
+        const offsetInicio = primerDiaMes.getDay();
+
+        // Indexar sesiones del mes por fecha 'YYYY-MM-DD' para acceso O(1)
+        const mapaSesiones = {};
+        sesionesMes.forEach((s) => {
+          mapaSesiones[s.fecha] = s;
+        });
+
+        const celdas = [];
+
+        // Celdas vacías antes del día 1
+        for (let i = 0; i < offsetInicio; i++) {
+          celdas.push({ tipo: 'vacio', key: `empty-${mesKey}-${i}` });
+        }
+
+        // Celdas de cada día del mes (1 al 28/30/31)
+        for (let dia = 1; dia <= totalDiasMes; dia++) {
+          const fechaIso = `${year}-${String(month).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+          const fueraDePeriodo =
+            (currentAsig.fechaInicio && fechaIso < currentAsig.fechaInicio) ||
+            (currentAsig.fechaFin && fechaIso > currentAsig.fechaFin);
+
+          celdas.push({
+            tipo: 'dia',
+            key: fechaIso,
+            numeroDia: dia,
+            fechaIso,
+            fueraDePeriodo,
+            sesion: mapaSesiones[fechaIso] || null
+          });
+        }
+
+        const nombreMes = primerDiaMes.toLocaleString('es-ES', {
+          month: 'long',
+          year: 'numeric'
+        });
+
+        return {
+          mesKey,
+          titulo: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1),
+          celdas
+        };
+      });
+  }, [todasLasSesiones, currentAsig]);
+
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 text-slate-800 font-sans flex flex-col">
       {/* ENCABEZADO */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 z-20">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
@@ -696,7 +766,7 @@ export default function DocenteScheduleTool() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleAbrirModalRequerimiento}
@@ -754,8 +824,8 @@ export default function DocenteScheduleTool() {
       {/* CONTENEDOR PRINCIPAL */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Barra Lateral Izquierda */}
-        <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-4 space-y-4 flex-shrink-0">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+        <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-4 space-y-4 flex-shrink-0 overflow-hidden">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
             <div className="flex items-center gap-1.5 text-slate-800">
               <IconLayers className="w-4 h-4 text-slate-600" />
               <h2 className="text-sm font-bold uppercase tracking-wider">Programas y Asignaciones</h2>
@@ -768,7 +838,7 @@ export default function DocenteScheduleTool() {
           <button
             type="button"
             onClick={handleAbrirCrear}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
+            className="flex-shrink-0 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
           >
             <IconPlus className="w-3.5 h-3.5" />
             Nueva Asignación
@@ -860,8 +930,8 @@ export default function DocenteScheduleTool() {
         </aside>
 
         {/* Panel Central */}
-        <main className="flex-1 p-6 overflow-y-auto space-y-5">
-          <div className="flex border-b border-slate-200">
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100">
+          <div className="flex-shrink-0 px-6 pt-5 bg-slate-100 z-10">
             <button
               type="button"
               onClick={() => setActiveTab('calendario')}
@@ -898,401 +968,597 @@ export default function DocenteScheduleTool() {
               )}
             </button>
           </div>
+          <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5 space-y-5">
 
-          {!currentAsig && (
-            <div className="bg-white border border-dashed border-slate-300 rounded p-12 text-center space-y-3">
-              <p className="text-sm font-semibold text-slate-700">No hay materias asignadas</p>
-              <button
-                type="button"
-                onClick={handleAbrirCrear}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded cursor-pointer transition-colors"
-              >
-                + Crear Asignación
-              </button>
-            </div>
-          )}
 
-          {/* TAB 1: Fechas y Sesiones */}
-          {currentAsig && activeTab === 'calendario' && (
-            <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
-                <div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                    {currentAsig.programaTipo}: {currentAsig.programaNombre}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 mt-1">
-                    {currentAsig.materia}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Vigencia: {formatDateDDMMYYYY(currentAsig.fechaInicio)} al {formatDateDDMMYYYY(currentAsig.fechaFin)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span> Normal
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Modificado
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-blue-500"></span> Asueto UES
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-red-600"></span> Choque
-                  </span>
-                </div>
+            {!currentAsig && (
+              <div className="bg-white border border-dashed border-slate-300 rounded p-12 text-center space-y-3">
+                <p className="text-sm font-semibold text-slate-700">No hay materias asignadas</p>
+                <button
+                  type="button"
+                  onClick={handleAbrirCrear}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded cursor-pointer transition-colors"
+                >
+                  + Crear Asignación
+                </button>
               </div>
+            )}
 
-              {/* Barra de Filtro por Días de la Semana */}
-              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-semibold text-slate-700 mr-1">Filtrar días:</span>
-                  {DIAS_SEMANA.map((dia) => {
-                    const tieneAsignacion = Boolean(currentAsig?.dias?.[dia.id]?.activo);
-                    const estaSeleccionado = diasFiltro.includes(dia.id);
+            {/* TAB 1: Fechas y Sesiones */}
+            {currentAsig && activeTab === 'calendario' && (
+              <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
+                {currentAsig && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
 
-                    return (
-                      <button
-                        key={dia.id}
-                        type="button"
-                        onClick={() => {
-                          setDiasFiltro((prev) =>
-                            prev.includes(dia.id)
-                              ? prev.filter((id) => id !== dia.id)
-                              : [...prev, dia.id]
-                          );
-                        }}
-                        className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${estaSeleccionado
-                          ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
-                          }`}
-                      >
-                        <span>{dia.nombre}</span>
-                        {tieneAsignacion && (
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
-                              }`}
-                            title="Tiene horario asignado"
-                          />
+                    {/* ENCABEZADO ÚNICO: Datos de la Asignación + Leyenda + Selector Calendario/Lista */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                      {/* Izquierda: Programa, Asignatura y Vigencia */}
+                      <div>
+                        {currentAsig.programaNombre && (
+                          <span className="inline-block px-2 py-0.5 mb-1.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
+                            {currentAsig.programaNombre}
+                          </span>
                         )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        <h2 className="text-lg font-bold text-slate-900 uppercase">
+                          {currentAsig.materia}
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Vigencia: {formatDateDDMMYYYY(currentAsig.fechaInicio)} al {formatDateDDMMYYYY(currentAsig.fechaFin)}
+                        </p>
+                      </div>
 
-                <div className="flex items-center gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => setDiasFiltro(DIAS_SEMANA.map((d) => d.id))}
-                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                  >
-                    Ver todos
-                  </button>
-                  <span className="text-slate-300">|</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const activos = DIAS_SEMANA
-                        .filter((d) => currentAsig?.dias?.[d.id]?.activo)
-                        .map((d) => d.id);
-                      setDiasFiltro(activos);
-                    }}
-                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                  >
-                    Días con asignación
-                  </button>
-                </div>
-              </div>
+                      {/* Derecha: Leyenda y Switcher (visible solo en la pestaña de Fechas y Sesiones) */}
+                      {activeTab === 'calendario' && (
+                        <div className="flex flex-wrap items-center gap-4">
+                          {/* Leyenda de estados */}
+                          <div className="flex flex-wrap items-center gap-3 text-xs">
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Normal
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Modificado
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Asueto UES
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Choque
+                            </span>
+                          </div>
 
-              <div className="overflow-x-auto border border-slate-200 rounded max-h-[500px]">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-50 sticky top-0 z-10 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-3">Fecha</th>
-                      <th className="py-2.5 px-3">Día</th>
-                      <th className="py-2.5 px-3">Horario</th>
-                      <th className="py-2.5 px-3 text-center">N° Horas</th>
-                      <th className="py-2.5 px-3">Estado / Observación</th>
-                      <th className="py-2.5 px-3 text-right">Ajuste</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {todasLasSesiones
-                      .filter((s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId))
-                      .map((s) => {
-                        const conflicto = mapaDeChoques[s.id];
-                        let filaBg = 'hover:bg-slate-50';
-                        if (s.esAsueto) filaBg = 'bg-blue-50/40 hover:bg-blue-50';
-                        else if (s.estado === 'MODIFICADO') filaBg = 'bg-amber-50/50 hover:bg-amber-50';
-                        else if (s.estado === 'CANCELADO') filaBg = 'bg-slate-100 text-slate-400';
-                        if (conflicto) filaBg = 'bg-red-50 text-red-900';
+                          {/* Selector Calendario / Lista con iconos Lucide */}
+                          <div className="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-medium border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => setVistaSesiones('cuadricula')}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition cursor-pointer ${vistaSesiones === 'cuadricula'
+                                ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                                : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                              <IconCalendar className="w-3.5 h-3.5" />
+                              <span>Calendario</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVistaSesiones('lista')}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition cursor-pointer ${vistaSesiones === 'lista'
+                                ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                                : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                              <IconList className="w-3.5 h-3.5" />
+                              <span>Lista</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                        return (
-                          <tr key={s.id} className={filaBg}>
-                            <td className="py-2 px-3 font-semibold text-slate-900">{formatDateDDMMYYYY(s.fecha)}</td>
-                            <td className="py-2 px-3 text-slate-600">{s.nombreDia}</td>
-                            <td className="py-2 px-3 font-mono text-slate-800">
-                              {s.activa ? `${formatTime12h(s.horaInicio)} a ${formatTime12h(s.horaFin)}` : '—'}
-                            </td>
-                            <td className="py-2 px-3 font-bold text-center text-slate-900">
-                              {s.duracionHoras > 0 ? `${s.duracionHoras.toFixed(1)} h` : '0 h'}
-                            </td>
-                            <td className="py-2 px-3">
-                              {conflicto ? (
-                                <span className="text-red-700 font-semibold flex items-center gap-1">
-                                  <IconAlert className="w-3.5 h-3.5 text-red-600" />
-                                  Choque con: {conflicto.map((c) => `${c.contra} (${c.rango})`).join(', ')}
-                                </span>
-                              ) : s.esAsueto ? (
-                                <span className="text-blue-800 bg-blue-100 px-2 py-0.5 rounded text-[11px] font-medium">
-                                  {s.asuetoNombre}
-                                </span>
-                              ) : s.estado === 'MODIFICADO' ? (
-                                <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded text-[11px] font-medium">
-                                  Modificado: {s.excepcion?.motivo || 'Ajuste horario'}
-                                </span>
-                              ) : s.estado === 'CANCELADO' ? (
-                                <span className="text-slate-500 italic">Clase cancelada</span>
-                              ) : (
-                                <span className="text-emerald-700 font-medium">Clase regular</span>
-                              )}
-                            </td>
-                            <td className="py-2 px-3 text-right">
-                              {!s.esAsueto && (
+                    {/* CONTENIDO DE FECHAS Y SESIONES */}
+                    {activeTab === 'calendario' && (
+                      <>
+                        {vistaSesiones === 'cuadricula' ? (
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            {mesesCalendario.map((mes) => (
+                              <div
+                                key={mes.mesKey}
+                                className="border border-slate-200 rounded-lg overflow-hidden bg-white"
+                              >
+                                {/* Título del Mes */}
+                                <div className="bg-slate-800 text-white px-4 py-2 text-sm font-semibold">
+                                  {mes.titulo}
+                                </div>
+
+                                {/* Cabecera Lunes a Domingo */}
+                                <div className="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center text-[11px] font-bold text-slate-600 uppercase">
+                                  {DIAS_CABECERA.map((d) => (
+                                    <div
+                                      key={d}
+                                      className="py-1.5 border-r last:border-r-0 border-slate-200"
+                                    >
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Celdas de Días */}
+                                <div className="grid grid-cols-7 bg-slate-200 gap-px">
+                                  {mes.celdas.map((celda) => {
+                                    if (celda.tipo === 'vacio') {
+                                      return (
+                                        <div
+                                          key={celda.key}
+                                          className="bg-slate-200/70 min-h-[84px]"
+                                        />
+                                      );
+                                    }
+
+                                    const s = celda.sesion;
+                                    const conflicto = s ? mapaDeChoques[s.id] : null;
+                                    const esInteractivo = !celda.fueraDePeriodo && s && !s.esAsueto;
+
+                                    // Color base: gris más oscuro si está fuera del periodo; blanco si está dentro del periodo sin clase
+                                    let cardStyle = celda.fueraDePeriodo
+                                      ? 'bg-slate-200/75 text-slate-400 select-none'
+                                      : 'bg-white text-slate-500';
+
+                                    if (!celda.fueraDePeriodo && s) {
+                                      if (conflicto)
+                                        cardStyle = 'bg-red-50 text-red-900 hover:bg-red-100';
+                                      else if (s.esAsueto)
+                                        cardStyle = 'bg-blue-50/70 text-blue-800';
+                                      else if (s.estado === 'MODIFICADO')
+                                        cardStyle = 'bg-amber-50 text-amber-900 hover:bg-amber-100';
+                                      else if (s.estado === 'CANCELADO')
+                                        cardStyle = 'bg-slate-100 text-slate-400 hover:bg-slate-200/70';
+                                      else if (s.activa)
+                                        cardStyle = 'bg-emerald-50/60 text-slate-800 hover:bg-emerald-100/70';
+                                    }
+
+                                    return (
+                                      <div
+                                        key={celda.key}
+                                        onClick={() => {
+                                          if (!esInteractivo) return;
+                                          setExcepForm({
+                                            fecha: s.fecha,
+                                            tipo: s.excepcion?.tipo || 'MODIFICAR',
+                                            horaInicio: s.horaInicio || '18:00',
+                                            horaFin: s.horaFin || '21:00',
+                                            motivo: s.excepcion?.motivo || ''
+                                          });
+                                          setModalExcepcion(s);
+                                        }}
+                                        className={`min-h-[84px] p-1.5 flex flex-col justify-between transition ${cardStyle} ${esInteractivo ? 'cursor-pointer' : ''
+                                          }`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span
+                                            className={`text-xs font-bold ${celda.fueraDePeriodo
+                                                ? 'text-slate-400/90'
+                                                : s?.activa
+                                                  ? 'text-slate-800'
+                                                  : 'text-slate-600'
+                                              }`}
+                                          >
+                                            {celda.numeroDia}
+                                          </span>
+                                          {!celda.fueraDePeriodo && s?.activa && (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white border border-slate-200 text-indigo-700">
+                                              {s.duracionHoras}h
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {!celda.fueraDePeriodo && s && (
+                                          <div className="mt-1 space-y-0.5 text-[10px] leading-tight">
+                                            {conflicto ? (
+                                              <span
+                                                className="block font-bold text-red-700 truncate"
+                                                title={conflicto.map((c) => c.contra).join(', ')}
+                                              >
+                                                Choque ({s.horaInicio}-{s.horaFin})
+                                              </span>
+                                            ) : s.esAsueto ? (
+                                              <span
+                                                className="block font-medium text-blue-700 line-clamp-2"
+                                                title={s.asuetoNombre}
+                                              >
+                                                {s.asuetoNombre}
+                                              </span>
+                                            ) : s.estado === 'CANCELADO' ? (
+                                              <span className="block italic text-slate-500">Cancelada</span>
+                                            ) : s.activa ? (
+                                              <>
+                                                <span className="block font-mono font-semibold text-slate-700">
+                                                  {s.horaInicio} - {s.horaFin}
+                                                </span>
+                                                {s.estado === 'MODIFICADO' && (
+                                                  <span className="block text-[9px] font-semibold text-amber-700 truncate">
+                                                    Ajustado
+                                                  </span>
+                                                )}
+                                              </>
+                                            ) : null}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* VISTA DE LISTA */
+                          <div className="space-y-4">
+                            {/* Barra de Filtro por Días de la Semana (solo visible en vista de Lista) */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-semibold text-slate-700 mr-1">Filtrar días:</span>
+                                {DIAS_SEMANA.map((dia) => {
+                                  const tieneAsignacion = Boolean(currentAsig?.dias?.[dia.id]?.activo);
+                                  const estaSeleccionado = diasFiltro.includes(dia.id);
+
+                                  return (
+                                    <button
+                                      key={dia.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setDiasFiltro((prev) =>
+                                          prev.includes(dia.id)
+                                            ? prev.filter((id) => id !== dia.id)
+                                            : [...prev, dia.id]
+                                        );
+                                      }}
+                                      className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${estaSeleccionado
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                      <span>{dia.nombre}</span>
+                                      {tieneAsignacion && (
+                                        <span
+                                          className={`w-1.5 h-1.5 rounded-full ${estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
+                                            }`}
+                                          title="Tiene horario asignado"
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="flex items-center gap-2 text-[11px]">
+                                <button
+                                  type="button"
+                                  onClick={() => setDiasFiltro(DIAS_SEMANA.map((d) => d.id))}
+                                  className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                                >
+                                  Ver todos
+                                </button>
+                                <span className="text-slate-300">|</span>
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setExcepForm({
-                                      fecha: s.fecha,
-                                      tipo: s.excepcion?.tipo || 'MODIFICAR',
-                                      horaInicio: s.horaInicio || '18:00',
-                                      horaFin: s.horaFin || '21:00',
-                                      motivo: s.excepcion?.motivo || ''
-                                    });
-                                    setModalExcepcion(s);
+                                    const activos = DIAS_SEMANA
+                                      .filter((d) => currentAsig?.dias?.[d.id]?.activo)
+                                      .map((d) => d.id);
+                                    setDiasFiltro(activos);
                                   }}
-                                  className="px-2 py-1 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-[11px] font-semibold cursor-pointer transition-colors"
+                                  className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
                                 >
-                                  {s.excepcion ? 'Editar Ajuste' : 'Cambiar Día'}
+                                  Días con asignación
                                 </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    {todasLasSesiones.filter(
-                      (s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId)
-                    ).length === 0 && (
+                              </div>
+                            </div>
+
+                            {/* Tabla de Sesiones Filtradas */}
+                            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead className="bg-slate-100 text-slate-600 uppercase">
+                                  <tr>
+                                    <th className="py-2.5 px-3">Fecha</th>
+                                    <th className="py-2.5 px-3">Día</th>
+                                    <th className="py-2.5 px-3">Horario Aplicado</th>
+                                    <th className="py-2.5 px-3">N° Horas</th>
+                                    <th className="py-2.5 px-3">Estado / Observación</th>
+                                    <th className="py-2.5 px-3 text-right">Acción</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {todasLasSesiones
+                                    .filter(
+                                      (s) =>
+                                        s.asignacionId === currentAsig.id &&
+                                        diasFiltro.includes(s.diaSemanaId)
+                                    )
+                                    .map((s) => {
+                                      const conflicto = mapaDeChoques[s.id];
+
+                                      let filaBg = 'hover:bg-slate-50';
+                                      if (s.esAsueto) filaBg = 'bg-blue-50/50 hover:bg-blue-50';
+                                      else if (s.estado === 'MODIFICADO') filaBg = 'bg-amber-50/50 hover:bg-amber-50';
+                                      else if (s.estado === 'CANCELADO') filaBg = 'bg-slate-100 text-slate-400';
+                                      if (conflicto) filaBg = 'bg-red-50 text-red-900';
+
+                                      return (
+                                        <tr key={s.id} className={filaBg}>
+                                          <td className="py-2 px-3 font-semibold">{formatDateDDMMYYYY(s.fecha)}</td>
+                                          <td className="py-2 px-3">{s.nombreDia}</td>
+                                          <td className="py-2 px-3 font-mono">
+                                            {s.activa ? `${s.horaInicio} - ${s.horaFin}` : '—'}
+                                          </td>
+                                          <td className="py-2 px-3 font-bold">
+                                            {s.duracionHoras > 0 ? `${s.duracionHoras.toFixed(1)} h` : '0 h'}
+                                          </td>
+                                          <td className="py-2 px-3">
+                                            {conflicto ? (
+                                              <span className="text-red-700 font-semibold">
+                                                ⚠️ Choque con: {conflicto.map((c) => `${c.contra} (${c.rango})`).join(', ')}
+                                              </span>
+                                            ) : s.esAsueto ? (
+                                              <span className="text-blue-700 font-medium bg-blue-100 px-2 py-0.5 rounded">
+                                                {s.asuetoNombre}
+                                              </span>
+                                            ) : s.estado === 'MODIFICADO' ? (
+                                              <span className="text-amber-800 font-medium bg-amber-100 px-2 py-0.5 rounded">
+                                                Modificado: {s.excepcion?.motivo || 'Horario Especial'}
+                                              </span>
+                                            ) : s.estado === 'CANCELADO' ? (
+                                              <span className="text-slate-500 italic">Cancelada</span>
+                                            ) : (
+                                              <span className="text-emerald-700">Programada regular</span>
+                                            )}
+                                          </td>
+                                          <td className="py-2 px-3 text-right">
+                                            {!s.esAsueto && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setExcepForm({
+                                                    fecha: s.fecha,
+                                                    tipo: s.excepcion?.tipo || 'MODIFICAR',
+                                                    horaInicio: s.horaInicio || '18:00',
+                                                    horaFin: s.horaFin || '21:00',
+                                                    motivo: s.excepcion?.motivo || ''
+                                                  });
+                                                  setModalExcepcion(s);
+                                                }}
+                                                className="px-2.5 py-1 text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded text-xs font-medium cursor-pointer"
+                                              >
+                                                {s.excepcion ? 'Editar Ajuste' : 'Cambiar Día'}
+                                              </button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+
+                                  {/* Mensaje cuando no hay sesiones para los días seleccionados */}
+                                  {todasLasSesiones.filter(
+                                    (s) =>
+                                      s.asignacionId === currentAsig.id &&
+                                      diasFiltro.includes(s.diaSemanaId)
+                                  ).length === 0 && (
+                                      <tr>
+                                        <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                                          No hay sesiones programadas para los días seleccionados en el filtro.
+                                        </td>
+                                      </tr>
+                                    )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: Resumen de Horas */}
+            {activeTab === 'metricas' && (
+              <div className="space-y-5">
+                <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">
+                        Recuento Consolidado por Asignación
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto border border-slate-200 rounded">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-slate-400 italic">
-                            No hay sesiones programadas para los días seleccionados en el filtro.
+                          <th className="py-2.5 px-3 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              checked={asignaciones.length > 0 && seleccionadasResumen.length === asignaciones.length}
+                              onChange={() => {
+                                if (seleccionadasResumen.length === asignaciones.length) {
+                                  setSeleccionadasResumen([]);
+                                } else {
+                                  setSeleccionadasResumen(asignaciones.map((a) => a.id));
+                                }
+                              }}
+                              className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                            />
+                          </th>
+                          <th className="py-2.5 px-3">Programa</th>
+                          <th className="py-2.5 px-3">Cargo</th>
+                          <th className="py-2.5 px-3">Asignación</th>
+                          <th className="py-2.5 px-3">Fecha Inicio</th>
+                          <th className="py-2.5 px-3">Fecha Fin</th>
+                          <th className="py-2.5 px-3 text-center">Sesiones</th>
+                          <th className="py-2.5 px-3 text-right">Total Horas</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {resumenPorAsignacion.map((item) => {
+                          const estaMarcada = seleccionadasResumen.includes(item.id);
+
+                          return (
+                            <tr
+                              key={item.id}
+                              className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
+                            >
+                              <td className="py-3 px-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={estaMarcada}
+                                  onChange={() => {
+                                    setSeleccionadasResumen((prev) =>
+                                      prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
+                                    );
+                                  }}
+                                  className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                                />
+                              </td>
+                              <td className="py-3 px-3 text-slate-600">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700 mr-2">
+                                  {item.programaTipo}
+                                </span>
+                                {item.programaNombre}
+                              </td>
+                              <td className="py-3 px-3 text-slate-700 font-medium">
+                                {item.cargo}
+                              </td>
+                              <td className="py-3 px-3 font-semibold text-slate-900">
+                                {item.materia}
+                              </td>
+                              <td className="py-3 px-3 text-slate-600 font-mono">
+                                {formatDateDDMMYYYY(item.fechaInicio)}
+                              </td>
+                              <td className="py-3 px-3 text-slate-600 font-mono">
+                                {formatDateDDMMYYYY(item.fechaFin)}
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono text-slate-700">
+                                {item.totalSesiones} clases
+                              </td>
+                              <td className="py-3 px-3 text-right font-bold text-slate-900">
+                                {item.totalHoras.toFixed(1)} h
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
+                        <tr>
+                          <td colSpan={6} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
+                            Total Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono text-xs">
+                            {totalesSeleccionados.totalSesiones} clases
+                          </td>
+                          <td className="py-2.5 px-3 text-right text-xs">
+                            {totalesSeleccionados.totalHoras.toFixed(1)} h
                           </td>
                         </tr>
-                      )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
 
-          {/* TAB 2: Resumen de Horas */}
-          {activeTab === 'metricas' && (
-            <div className="space-y-5">
+                {currentAsig && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                        Distribución por Mes ({currentAsig.materia})
+                      </h4>
+                      <div className="divide-y divide-slate-100 text-xs">
+                        {Object.entries(metricasAsigActiva.porMes).map(([mes, horas]) => (
+                          <div key={mes} className="py-2 flex justify-between items-center">
+                            <span className="font-medium text-slate-700">{mes}</span>
+                            <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              {horas.toFixed(1)} h
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                        Distribución por Semana ({currentAsig.materia})
+                      </h4>
+                      <div className="divide-y divide-slate-100 text-xs max-h-[220px] overflow-y-auto pr-1">
+                        {Object.entries(metricasAsigActiva.porSemana).map(([semana, horas]) => (
+                          <div key={semana} className="py-2 flex justify-between items-center">
+                            <span className="text-slate-600">Semana del {formatDateDDMMYYYY(semana)}</span>
+                            <span className="font-mono font-semibold text-slate-900">{horas.toFixed(1)} h</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: Auditoría de Choques */}
+            {activeTab === 'choques' && (
               <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">
-                      Recuento Consolidado por Asignación
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto border border-slate-200 rounded">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                      <tr>
-                        <th className="py-2.5 px-3 w-10 text-center">
-                          <input
-                            type="checkbox"
-                            checked={asignaciones.length > 0 && seleccionadasResumen.length === asignaciones.length}
-                            onChange={() => {
-                              if (seleccionadasResumen.length === asignaciones.length) {
-                                setSeleccionadasResumen([]);
-                              } else {
-                                setSeleccionadasResumen(asignaciones.map((a) => a.id));
-                              }
-                            }}
-                            className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                          />
-                        </th>
-                        <th className="py-2.5 px-3">Programa</th>
-                        <th className="py-2.5 px-3">Cargo</th>
-                        <th className="py-2.5 px-3">Asignación</th>
-                        <th className="py-2.5 px-3">Fecha Inicio</th>
-                        <th className="py-2.5 px-3">Fecha Fin</th>
-                        <th className="py-2.5 px-3 text-center">Sesiones</th>
-                        <th className="py-2.5 px-3 text-right">Total Horas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {resumenPorAsignacion.map((item) => {
-                        const estaMarcada = seleccionadasResumen.includes(item.id);
-
-                        return (
-                          <tr
-                            key={item.id}
-                            className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
-                          >
-                            <td className="py-3 px-3 text-center">
-                              <input
-                                type="checkbox"
-                                checked={estaMarcada}
-                                onChange={() => {
-                                  setSeleccionadasResumen((prev) =>
-                                    prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
-                                  );
-                                }}
-                                className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                              />
-                            </td>
-                            <td className="py-3 px-3 text-slate-600">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700 mr-2">
-                                {item.programaTipo}
-                              </span>
-                              {item.programaNombre}
-                            </td>
-                            <td className="py-3 px-3 text-slate-700 font-medium">
-                              {item.cargo}
-                            </td>
-                            <td className="py-3 px-3 font-semibold text-slate-900">
-                              {item.materia}
-                            </td>
-                            <td className="py-3 px-3 text-slate-600 font-mono">
-                              {formatDateDDMMYYYY(item.fechaInicio)}
-                            </td>
-                            <td className="py-3 px-3 text-slate-600 font-mono">
-                              {formatDateDDMMYYYY(item.fechaFin)}
-                            </td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-700">
-                              {item.totalSesiones} clases
-                            </td>
-                            <td className="py-3 px-3 text-right font-bold text-slate-900">
-                              {item.totalHoras.toFixed(1)} h
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
-                      <tr>
-                        <td colSpan={6} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
-                          Total Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-mono text-xs">
-                          {totalesSeleccionados.totalSesiones} clases
-                        </td>
-                        <td className="py-2.5 px-3 text-right text-xs">
-                          {totalesSeleccionados.totalHoras.toFixed(1)} h
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {currentAsig && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                      Distribución por Mes ({currentAsig.materia})
-                    </h4>
-                    <div className="divide-y divide-slate-100 text-xs">
-                      {Object.entries(metricasAsigActiva.porMes).map(([mes, horas]) => (
-                        <div key={mes} className="py-2 flex justify-between items-center">
-                          <span className="font-medium text-slate-700">{mes}</span>
-                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                            {horas.toFixed(1)} h
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                      Distribución por Semana ({currentAsig.materia})
-                    </h4>
-                    <div className="divide-y divide-slate-100 text-xs max-h-[220px] overflow-y-auto pr-1">
-                      {Object.entries(metricasAsigActiva.porSemana).map(([semana, horas]) => (
-                        <div key={semana} className="py-2 flex justify-between items-center">
-                          <span className="text-slate-600">Semana del {formatDateDDMMYYYY(semana)}</span>
-                          <span className="font-mono font-semibold text-slate-900">{horas.toFixed(1)} h</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: Auditoría de Choques */}
-          {activeTab === 'choques' && (
-            <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Auditoría Cruzada de Choques Horarios
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Verificación de compatibilidad entre todas las asignaciones programadas para {docenteNombre || 'el docente'}.
-                </p>
-              </div>
-
-              {cantidadChoquesTotales === 0 ? (
-                <div className="text-center py-10 bg-slate-50 border border-slate-200 rounded">
-                  <IconCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-800">Horarios compatibles y verificados</p>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Auditoría Cruzada de Choques Horarios
+                  </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    No se detectaron choques de horario en ninguna fecha del ciclo.
+                    Verificación de compatibilidad entre todas las asignaciones programadas para {docenteNombre || 'el docente'}.
                   </p>
                 </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {Object.entries(mapaDeChoques).map(([sesionId, conflictos]) => {
-                    const sesion = todasLasSesiones.find((s) => s.id === sesionId);
-                    if (!sesion) return null;
 
-                    return (
-                      <div
-                        key={sesionId}
-                        className="p-3 rounded border border-red-200 bg-red-50 text-xs text-red-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                      >
-                        <div>
-                          <span className="font-bold block text-sm">
-                            {formatDateDDMMYYYY(sesion.fecha)} ({sesion.nombreDia})
-                          </span>
-                          <span className="text-red-700">
-                            {sesion.materia}: {formatTime12h(sesion.horaInicio)} a {formatTime12h(sesion.horaFin)}
-                          </span>
-                        </div>
-                        <div className="sm:text-right">
-                          <span className="font-bold text-red-800 block">Conflicto con:</span>
-                          {conflictos.map((c, i) => (
-                            <span key={i} className="block text-red-700">
-                              {c.contra} ({c.rango})
+                {cantidadChoquesTotales === 0 ? (
+                  <div className="text-center py-10 bg-slate-50 border border-slate-200 rounded">
+                    <IconCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-800">Horarios compatibles y verificados</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      No se detectaron choques de horario en ninguna fecha del ciclo.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {Object.entries(mapaDeChoques).map(([sesionId, conflictos]) => {
+                      const sesion = todasLasSesiones.find((s) => s.id === sesionId);
+                      if (!sesion) return null;
+
+                      return (
+                        <div
+                          key={sesionId}
+                          className="p-3 rounded border border-red-200 bg-red-50 text-xs text-red-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                        >
+                          <div>
+                            <span className="font-bold block text-sm">
+                              {formatDateDDMMYYYY(sesion.fecha)} ({sesion.nombreDia})
                             </span>
-                          ))}
+                            <span className="text-red-700">
+                              {sesion.materia}: {formatTime12h(sesion.horaInicio)} a {formatTime12h(sesion.horaFin)}
+                            </span>
+                          </div>
+                          <div className="sm:text-right">
+                            <span className="font-bold text-red-800 block">Conflicto con:</span>
+                            {conflictos.map((c, i) => (
+                              <span key={i} className="block text-red-700">
+                                {c.contra} ({c.rango})
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </main>
       </div>
 
