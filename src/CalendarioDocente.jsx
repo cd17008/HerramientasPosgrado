@@ -658,15 +658,37 @@ export default function DocenteScheduleTool() {
     setModalRequerimientoAbierto(false);
   };
 
+  // 1. Validación en tiempo real para el modal de excepción diaria
+  const configOriginalDiaModal = modalExcepcion
+    ? currentAsig?.dias?.[modalExcepcion.diaSemanaId]
+    : null;
+
+  const rangoHorarioInvalido =
+    Boolean(modalExcepcion) &&
+    excepForm.tipo === 'MODIFICAR' &&
+    (!excepForm.horaInicio ||
+      !excepForm.horaFin ||
+      timeToMinutes(excepForm.horaFin) <= timeToMinutes(excepForm.horaInicio));
+
+  const coincideConHorarioOriginal =
+    Boolean(modalExcepcion) &&
+    excepForm.tipo === 'MODIFICAR' &&
+    !rangoHorarioInvalido &&
+    Boolean(configOriginalDiaModal?.activo) &&
+    excepForm.horaInicio === configOriginalDiaModal.horaInicio &&
+    excepForm.horaFin === configOriginalDiaModal.horaFin;
+
+  // 2. Función de guardado con normalización automática
   const guardarExcepcion = () => {
-    if (!excepForm.fecha) return;
+    if (!excepForm.fecha || !modalExcepcion || rangoHorarioInvalido) return;
 
     setAsignaciones((prev) =>
       prev.map((asig) => {
         if (asig.id !== asignacionSeleccionadaId) return asig;
         const nuevasExcepciones = { ...(asig.excepciones || {}) };
 
-        if (excepForm.tipo === 'RESET') {
+        // Si elige RESET o si ingresó el mismo horario semanal original, se guarda como sesión normal
+        if (excepForm.tipo === 'RESET' || coincideConHorarioOriginal) {
           delete nuevasExcepciones[excepForm.fecha];
         } else {
           nuevasExcepciones[excepForm.fecha] = {
@@ -679,6 +701,7 @@ export default function DocenteScheduleTool() {
         return { ...asig, excepciones: nuevasExcepciones };
       })
     );
+
     setModalExcepcion(null);
   };
 
@@ -1847,83 +1870,168 @@ export default function DocenteScheduleTool() {
       )}
 
       {/* MODAL 2: AJUSTE PUNTUAL DE FECHA */}
+      {/* Modal para Modificar Día Específico o Cancelar */}
+
       {modalExcepcion && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-300 rounded max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <h3 className="font-bold text-slate-900 text-sm">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full p-6 flex flex-col">
+
+            {/* Encabezado fijo */}
+            <div className="pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base">
                 Ajuste para el {formatDateDDMMYYYY(modalExcepcion.fecha)} ({modalExcepcion.nombreDia})
               </h3>
-              <button
-                type="button"
-                onClick={() => setModalExcepcion(null)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
-              >
-                <IconX className="w-4 h-4" />
-              </button>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Configura una excepción puntual para esta fecha sin alterar el horario semanal base.
+              </p>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700">Acción a realizar</label>
-                <select
-                  value={excepForm.tipo}
-                  onChange={(e) => setExcepForm({ ...excepForm, tipo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer"
-                >
-                  <option value="MODIFICAR">Cambiar horario para esta fecha puntual</option>
-                  <option value="CANCELAR">Cancelar clase en esta fecha</option>
-                  <option value="RESET">Restablecer a horario regular</option>
-                </select>
-              </div>
+            {/* Cuerpo con altura mínima reservada para evitar saltos bruscos */}
+            <div className="py-4 space-y-4 text-xs min-h-[320px] flex flex-col justify-between">
 
-              {excepForm.tipo === 'MODIFICAR' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-slate-600 mb-1">Hora Inicio</label>
-                    <input
-                      type="time"
-                      value={excepForm.horaInicio}
-                      onChange={(e) => setExcepForm({ ...excepForm, horaInicio: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 mb-1">Hora Fin</label>
-                    <input
-                      type="time"
-                      value={excepForm.horaFin}
-                      onChange={(e) => setExcepForm({ ...excepForm, horaFin: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5"
-                    />
-                  </div>
+              {/* 1. Selector de Acción en 3 columnas horizontales */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-2">Acción</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    {
+                      valor: 'MODIFICAR',
+                      titulo: 'Cambiar horario',
+                      descripcion: 'Hora especial solo este día'
+                    },
+                    {
+                      valor: 'CANCELAR',
+                      titulo: 'Cancelar clase',
+                      descripcion: 'Suspende y no suma horas'
+                    },
+                    {
+                      valor: 'RESET',
+                      titulo: 'Horario original',
+                      descripcion: 'Mantiene horario semanal'
+                    }
+                  ].map((opcion) => {
+                    const seleccionado = excepForm.tipo === opcion.valor;
+                    return (
+                      <label
+                        key={opcion.valor}
+                        className={`flex flex-col justify-between p-2.5 rounded-lg border cursor-pointer transition ${seleccionado
+                            ? 'border-indigo-600 bg-indigo-50/60 text-slate-900 ring-1 ring-indigo-600/20'
+                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                          <span className="font-semibold text-xs leading-tight">{opcion.titulo}</span>
+                          <input
+                            type="radio"
+                            name="tipoExcepcion"
+                            value={opcion.valor}
+                            checked={seleccionado}
+                            onChange={(e) => setExcepForm({ ...excepForm, tipo: e.target.value })}
+                            className="text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                          />
+                        </div>
+                        <span className="block text-[11px] text-slate-500 leading-snug">
+                          {opcion.descripcion}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
-              <div>
-                <label className="block text-slate-600 mb-1">Motivo / Justificación</label>
-                <input
-                  type="text"
-                  placeholder="Ej. Reposición, ajuste operativo..."
-                  value={excepForm.motivo}
-                  onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2"
-                />
+              {/* 2. Área dinámica con espacio estable */}
+              <div className="flex-1 flex flex-col justify-start space-y-3">
+                {excepForm.tipo === 'MODIFICAR' && (
+                  <div className="space-y-2.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-medium text-slate-700 mb-1">Hora Inicio</label>
+                        <input
+                          type="time"
+                          value={excepForm.horaInicio}
+                          onChange={(e) => setExcepForm({ ...excepForm, horaInicio: e.target.value })}
+                          className={`w-full border rounded-lg p-2 ${rangoHorarioInvalido ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                            }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium text-slate-700 mb-1">Hora Fin</label>
+                        <input
+                          type="time"
+                          value={excepForm.horaFin}
+                          onChange={(e) => setExcepForm({ ...excepForm, horaFin: e.target.value })}
+                          className={`w-full border rounded-lg p-2 ${rangoHorarioInvalido ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                            }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Alert (Error crítico): Hora de fin inferior o igual a inicio */}
+                    {rangoHorarioInvalido && (
+                      <div
+                        role="alert"
+                        className="p-2.5 rounded-lg bg-red-50 border border-red-300 text-red-800 text-[11px] leading-snug"
+                      >
+                        <strong className="font-bold">Horario inválido:</strong> La hora de fin debe ser posterior a la hora de inicio.
+                      </div>
+                    )}
+
+                    {/* Warning (Aviso informativo): Horario idéntico al original */}
+                    {coincideConHorarioOriginal && (
+                      <div
+                        role="status"
+                        className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[11px] leading-snug"
+                      >
+                        <strong className="font-bold">Aviso:</strong> Coincide con el horario semanal original ({configOriginalDiaModal.horaInicio} - {configOriginalDiaModal.horaFin}). Se guardará como sesión regular sin marca de ajuste.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Campo de motivo */}
+                {excepForm.tipo !== 'RESET' && !coincideConHorarioOriginal && (
+                  <div>
+                    <label className="block font-medium text-slate-700 mb-1">Motivo / Justificación</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Reposición, ajuste institucional"
+                      value={excepForm.motivo}
+                      onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
+                      className="w-full border border-slate-300 rounded-lg p-2"
+                    />
+                  </div>
+                )}
+
+                {/* Mensaje informativo cuando se elige horario original para aprovechar el espacio sin encoger el modal */}
+                {excepForm.tipo === 'RESET' && (
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
+                    Esta fecha utilizará el horario semanal recurrente configurado para los días{' '}
+                    <strong className="text-slate-800">{modalExcepcion.nombreDia.toLowerCase()}</strong>
+                    {configOriginalDiaModal?.activo
+                      ? ` (${configOriginalDiaModal.horaInicio} - ${configOriginalDiaModal.horaFin}).`
+                      : '.'}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            {/* Pie fijo con botones */}
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setModalExcepcion(null)}
-                className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 type="button"
                 onClick={guardarExcepcion}
-                className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                disabled={rangoHorarioInvalido}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${rangoHorarioInvalido
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                  }`}
               >
                 Aplicar Ajuste
               </button>
