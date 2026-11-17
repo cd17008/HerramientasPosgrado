@@ -228,42 +228,69 @@ export default function DocenteScheduleTool() {
   }, [asignaciones]);
 
   // Auditoría de Choques
-  const mapaDeChoques = useMemo(() => {
-    const choques = {};
-    const porFecha = {};
+  //Choques unicos
+  const { mapaDeChoques, listaChoquesUnicos } = useMemo(() => {
+    const mapa = {};
+    const unicos = [];
+    const paresVistos = new Set();
 
-    todasLasSesiones
-      .filter((s) => s.activa)
-      .forEach((s) => {
-        if (!porFecha[s.fecha]) porFecha[s.fecha] = [];
-        porFecha[s.fecha].push(s);
-      });
+    const sesionesActivas = todasLasSesiones.filter((s) => s.activa && !s.esAsueto);
 
-    Object.entries(porFecha).forEach(([fecha, sesList]) => {
-      if (sesList.length > 1) {
-        for (let i = 0; i < sesList.length; i++) {
-          for (let j = i + 1; j < sesList.length; j++) {
-            const s1 = sesList[i];
-            const s2 = sesList[j];
+    for (let i = 0; i < sesionesActivas.length; i++) {
+      const s1 = sesionesActivas[i];
 
-            const start1 = timeToMinutes(s1.horaInicio);
-            const end1 = timeToMinutes(s1.horaFin);
-            const start2 = timeToMinutes(s2.horaInicio);
-            const end2 = timeToMinutes(s2.horaFin);
+      for (let j = i + 1; j < sesionesActivas.length; j++) {
+        const s2 = sesionesActivas[j];
 
-            if (Math.max(start1, start2) < Math.min(end1, end2)) {
-              if (!choques[s1.id]) choques[s1.id] = [];
-              if (!choques[s2.id]) choques[s2.id] = [];
+        // Solo comparar sesiones del mismo día y de asignaciones distintas
+        if (s1.fecha !== s2.fecha || s1.asignacionId === s2.asignacionId) continue;
 
-              choques[s1.id].push({ contra: s2.materia, rango: `${s2.horaInicio} - ${s2.horaFin}` });
-              choques[s2.id].push({ contra: s1.materia, rango: `${s1.horaInicio} - ${s1.horaFin}` });
+        // Verificar solapamiento de horas (en minutos o cadenas HH:MM)
+        const haySolapamiento = s1.horaInicio < s2.horaFin && s2.horaInicio < s1.horaFin;
+        if (!haySolapamiento) continue;
+
+        // 1. Mantener el mapa bidireccional para colorear ambas tarjetas/celdas en el calendario
+        if (!mapa[s1.id]) mapa[s1.id] = [];
+        mapa[s1.id].push({
+          contra: s2.materia,
+          rango: `${s2.horaInicio} - ${s2.horaFin}`
+        });
+
+        if (!mapa[s2.id]) mapa[s2.id] = [];
+        mapa[s2.id].push({
+          contra: s1.materia,
+          rango: `${s1.horaInicio} - ${s1.horaFin}`
+        });
+
+        // 2. Registrar el choque UNA SOLA VEZ para el reporte de Auditoría
+        const clavePar = [s1.id, s2.id].sort().join('__');
+        if (!paresVistos.has(clavePar)) {
+          paresVistos.add(clavePar);
+          unicos.push({
+            id: clavePar,
+            fecha: s1.fecha,
+            nombreDia: s1.nombreDia,
+            asignacionA: {
+              id: s1.asignacionId,
+              materia: s1.materia,
+              programa: s1.programaNombre || '',
+              horario: `${s1.horaInicio} - ${s1.horaFin}`
+            },
+            asignacionB: {
+              id: s2.asignacionId,
+              materia: s2.materia,
+              programa: s2.programaNombre || '',
+              horario: `${s2.horaInicio} - ${s2.horaFin}`
             }
-          }
+          });
         }
       }
-    });
+    }
 
-    return choques;
+    // Ordenar cronológicamente
+    unicos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    return { mapaDeChoques: mapa, listaChoquesUnicos: unicos };
   }, [todasLasSesiones]);
 
   // Resumen de Asignaciones
@@ -332,6 +359,7 @@ export default function DocenteScheduleTool() {
   };
 
   const handleAbrirCrear = () => {
+    setAlertaPeriodo(null);
     setModoEdicion(false);
     setFormAsignacion({
       id: `asig-${Date.now()}`,
@@ -356,6 +384,7 @@ export default function DocenteScheduleTool() {
   };
 
   const handleAbrirEditar = (asig) => {
+    setAlertaPeriodo(null);
     setModoEdicion(true);
     setFormAsignacion({
       id: asig.id,
@@ -368,31 +397,6 @@ export default function DocenteScheduleTool() {
       dias: JSON.parse(JSON.stringify(asig.dias))
     });
     setModalAsignacionAbierto(true);
-  };
-
-  const handleGuardarAsignacion = (e) => {
-    e.preventDefault();
-    const esCoord = esCargoCoordinador(formAsignacion.cargo);
-    if (!formAsignacion.programaNombre.trim() || (!esCoord && !formAsignacion.materia.trim())) {
-      toast.error('Por favor completa los campos requeridos de la asignación.');
-      return;
-    }
-
-    const payload = {
-      ...formAsignacion,
-      materia: esCoord ? `Coordinación Académica - ${formAsignacion.programaNombre}` : formAsignacion.materia
-    };
-
-    if (modoEdicion) {
-      setAsignaciones((prev) => prev.map((a) => (a.id === payload.id ? { ...a, ...payload } : a)));
-    } else {
-      const nueva = { ...payload, excepciones: {} };
-      setAsignaciones((prev) => [...prev, nueva]);
-      setAsignacionSeleccionadaId(nueva.id);
-      setSeleccionadasResumen((prev) => [...prev, nueva.id]);
-    }
-    toast.success(modoEdicion ? 'Asignación actualizada' : 'Asignación creada exitosamente');
-    setModalAsignacionAbierto(false);
   };
 
   const handleEliminarAsignacion = (idAEliminar) => {
@@ -748,6 +752,92 @@ export default function DocenteScheduleTool() {
       });
   }, [todasLasSesiones, currentAsig]);
 
+  const fechaTieneAsignacion = (fechaIso, diasConfig) => {
+    if (!fechaIso || !diasConfig) return false;
+    const [y, m, d] = fechaIso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const dayOfWeek = dt.getDay();
+    return Boolean(diasConfig[dayOfWeek]?.activo);
+  };
+
+  const calcularPeriodoAjustado = (fechaInicio, fechaFin, diasConfig) => {
+    if (!fechaInicio || !fechaFin || fechaInicio > fechaFin) return null;
+
+    const [sy, sm, sd] = fechaInicio.split('-').map(Number);
+    const [ey, em, ed] = fechaFin.split('-').map(Number);
+    let current = new Date(sy, sm - 1, sd);
+    const end = new Date(ey, em - 1, ed);
+
+    let primeraFechaValida = null;
+    let ultimaFechaValida = null;
+
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      if (diasConfig[dayOfWeek]?.activo) {
+        const iso = formatDateIso(current);
+        if (!primeraFechaValida) primeraFechaValida = iso;
+        ultimaFechaValida = iso;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return primeraFechaValida && ultimaFechaValida
+      ? { fechaInicio: primeraFechaValida, fechaFin: ultimaFechaValida }
+      : null;
+  };
+
+  const [alertaPeriodo, setAlertaPeriodo] = useState(null);
+
+  // Función que persiste la asignación (creación o edición)
+  const confirmarGuardadoAsignacion = (datosAGuardar) => {
+    setAsignaciones((prev) => {
+      const existe = prev.some((a) => a.id === datosAGuardar.id);
+      if (existe) {
+        return prev.map((a) => (a.id === datosAGuardar.id ? { ...a, ...datosAGuardar } : a));
+      }
+      return [...prev, { ...datosAGuardar, excepciones: {} }];
+    });
+
+    setAsignacionSeleccionadaId(datosAGuardar.id);
+    setAlertaPeriodo(null);
+    setModalAsignacionAbierto(false); // O el estado con el que cierras tu modal de asignación
+  };
+
+  // Validación previa al guardar
+  const handleGuardarAsignacion = (e) => {
+    if (e) e.preventDefault();
+
+    const tieneAlgunDiaActivo = Object.values(formAsignacion.dias || {}).some((d) => d?.activo);
+    const inicioValido = fechaTieneAsignacion(formAsignacion.fechaInicio, formAsignacion.dias);
+    const finValido = fechaTieneAsignacion(formAsignacion.fechaFin, formAsignacion.dias);
+
+    // Si hay días configurados, pero la fecha de inicio o de fin no cae en ninguno de ellos
+    if (tieneAlgunDiaActivo && (!inicioValido || !finValido)) {
+      const [sy, sm, sd] = formAsignacion.fechaInicio.split('-').map(Number);
+      const [ey, em, ed] = formAsignacion.fechaFin.split('-').map(Number);
+      const diaInicioNombre = DIAS_SEMANA.find((d) => d.id === new Date(sy, sm - 1, sd).getDay())?.nombre;
+      const diaFinNombre = DIAS_SEMANA.find((d) => d.id === new Date(ey, em - 1, ed).getDay())?.nombre;
+
+      const sugerencia = calcularPeriodoAjustado(
+        formAsignacion.fechaInicio,
+        formAsignacion.fechaFin,
+        formAsignacion.dias
+      );
+
+      setAlertaPeriodo({
+        inicioValido,
+        finValido,
+        diaInicioNombre,
+        diaFinNombre,
+        sugerencia
+      });
+      return;
+    }
+
+    // Si ambas fechas coinciden con días asignados, guarda directamente
+    confirmarGuardadoAsignacion(formAsignacion);
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-slate-100 text-slate-800 font-sans flex flex-col">
       {/* ENCABEZADO */}
@@ -809,7 +899,7 @@ export default function DocenteScheduleTool() {
             {cantidadChoquesTotales > 0 ? (
               <div className="bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5">
                 <IconAlert className="w-3.5 h-3.5 text-red-600" />
-                <span>{cantidadChoquesTotales} Choque(s)</span>
+                <span>{listaChoquesUnicos.length} Choque(s)</span>
               </div>
             ) : (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1">
@@ -961,9 +1051,9 @@ export default function DocenteScheduleTool() {
                 }`}
             >
               <span>Auditoría de Choques</span>
-              {cantidadChoquesTotales > 0 && (
+              {listaChoquesUnicos.length > 0 && (
                 <span className="px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[10px] font-bold">
-                  {cantidadChoquesTotales}
+                  {listaChoquesUnicos.length}
                 </span>
               )}
             </button>
@@ -1136,10 +1226,10 @@ export default function DocenteScheduleTool() {
                                         <div className="flex items-center justify-between">
                                           <span
                                             className={`text-xs font-bold ${celda.fueraDePeriodo
-                                                ? 'text-slate-400/90'
-                                                : s?.activa
-                                                  ? 'text-slate-800'
-                                                  : 'text-slate-600'
+                                              ? 'text-slate-400/90'
+                                              : s?.activa
+                                                ? 'text-slate-800'
+                                                : 'text-slate-600'
                                               }`}
                                           >
                                             {celda.numeroDia}
@@ -1506,54 +1596,57 @@ export default function DocenteScheduleTool() {
 
             {/* TAB 3: Auditoría de Choques */}
             {activeTab === 'choques' && (
-              <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    Auditoría Cruzada de Choques Horarios
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Verificación de compatibilidad entre todas las asignaciones programadas para {docenteNombre || 'el docente'}.
-                  </p>
-                </div>
-
-                {cantidadChoquesTotales === 0 ? (
-                  <div className="text-center py-10 bg-slate-50 border border-slate-200 rounded">
-                    <IconCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-800">Horarios compatibles y verificados</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      No se detectaron choques de horario en ninguna fecha del ciclo.
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Auditoría de Choques Horarios</h2>
+                    <p className="text-xs text-slate-500">
+                      Conflictos detectados entre asignaciones en la misma fecha y franja horaria.
                     </p>
                   </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {Object.entries(mapaDeChoques).map(([sesionId, conflictos]) => {
-                      const sesion = todasLasSesiones.find((s) => s.id === sesionId);
-                      if (!sesion) return null;
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                    {listaChoquesUnicos.length} {listaChoquesUnicos.length === 1 ? 'conflicto' : 'conflictos'}
+                  </span>
+                </div>
 
-                      return (
-                        <div
-                          key={sesionId}
-                          className="p-3 rounded border border-red-200 bg-red-50 text-xs text-red-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                        >
-                          <div>
-                            <span className="font-bold block text-sm">
-                              {formatDateDDMMYYYY(sesion.fecha)} ({sesion.nombreDia})
-                            </span>
-                            <span className="text-red-700">
-                              {sesion.materia}: {formatTime12h(sesion.horaInicio)} a {formatTime12h(sesion.horaFin)}
-                            </span>
-                          </div>
-                          <div className="sm:text-right">
-                            <span className="font-bold text-red-800 block">Conflicto con:</span>
-                            {conflictos.map((c, i) => (
-                              <span key={i} className="block text-red-700">
-                                {c.contra} ({c.rango})
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                {listaChoquesUnicos.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-emerald-700 bg-emerald-50/60 border border-emerald-200 rounded-lg">
+                    No se detectaron choques horarios entre las asignaciones programadas.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-100 text-slate-600 uppercase">
+                        <tr>
+                          <th className="py-2.5 px-3">Fecha</th>
+                          <th className="py-2.5 px-3">Día</th>
+                          <th className="py-2.5 px-3">Asignación 1</th>
+                          <th className="py-2.5 px-3">Asignación 2</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {listaChoquesUnicos.map((choque) => (
+                          <tr key={choque.id} className="hover:bg-red-50/40">
+                            <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
+                              {formatDateDDMMYYYY(choque.fecha)}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-600">{choque.nombreDia}</td>
+                            <td className="py-2.5 px-3">
+                              <div className="font-semibold text-slate-900">{choque.asignacionA.materia}</div>
+                              <div className="font-mono text-[11px] text-red-700 font-semibold">
+                                {choque.asignacionA.horario}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <div className="font-semibold text-slate-900">{choque.asignacionB.materia}</div>
+                              <div className="font-mono text-[11px] text-red-700 font-semibold">
+                                {choque.asignacionB.horario}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -1646,7 +1739,10 @@ export default function DocenteScheduleTool() {
                     type="date"
                     required
                     value={formAsignacion.fechaInicio}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, fechaInicio: e.target.value })}
+                    onChange={(e) => {
+                      setAlertaPeriodo(null);
+                      setFormAsignacion({ ...formAsignacion, fechaInicio: e.target.value });
+                    }}
                     className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
                   />
                 </div>
@@ -1656,7 +1752,10 @@ export default function DocenteScheduleTool() {
                     type="date"
                     required
                     value={formAsignacion.fechaFin}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, fechaFin: e.target.value })}
+                    onChange={(e) => {
+                      setAlertaPeriodo(null);
+                      setFormAsignacion({ ...formAsignacion, fechaFin: e.target.value });
+                    }}
                     className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
                   />
                 </div>
@@ -1679,6 +1778,7 @@ export default function DocenteScheduleTool() {
                             type="checkbox"
                             checked={conf.activo}
                             onChange={(e) => {
+                              setAlertaPeriodo(null);
                               const checked = e.target.checked;
                               setFormAsignacion({
                                 ...formAsignacion,
@@ -2508,6 +2608,72 @@ export default function DocenteScheduleTool() {
                 {modalConfirmacion.textoBoton}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {alertaPeriodo && (
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-3 z-[70]">
+          <div className="space-y-1">
+            <p className="font-bold text-amber-900">
+              Las fechas del periodo no coinciden con los días asignados
+            </p>
+            <ul className="list-disc list-inside text-amber-800 space-y-0.5">
+              {!alertaPeriodo.inicioValido && (
+                <li>
+                  La fecha de inicio ({formatDateDDMMYYYY(formAsignacion.fechaInicio)}) cae en{' '}
+                  <strong>{alertaPeriodo.diaInicioNombre}</strong>, día sin horario asignado.
+                </li>
+              )}
+              {!alertaPeriodo.finValido && (
+                <li>
+                  La fecha de fin ({formatDateDDMMYYYY(formAsignacion.fechaFin)}) cae en{' '}
+                  <strong>{alertaPeriodo.diaFinNombre}</strong>, día sin horario asignado.
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {alertaPeriodo.sugerencia ? (
+            <p className="text-amber-900 bg-amber-100/70 px-2.5 py-1.5 rounded border border-amber-200">
+              Periodo sugerido según las sesiones efectivas:{' '}
+              <strong>
+                {formatDateDDMMYYYY(alertaPeriodo.sugerencia.fechaInicio)} al{' '}
+                {formatDateDDMMYYYY(alertaPeriodo.sugerencia.fechaFin)}
+              </strong>
+            </p>
+          ) : (
+            <p className="text-red-700 font-medium">
+              No se encontró ninguna sesión válida dentro del rango de fechas seleccionado.
+            </p>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => confirmarGuardadoAsignacion(formAsignacion)}
+              className="px-3 py-1.5 rounded border border-amber-400 bg-white hover:bg-amber-100 text-amber-900 font-semibold cursor-pointer transition"
+            >
+              Mantener periodo ingresado
+            </button>
+
+            {alertaPeriodo.sugerencia && (
+              <button
+                type="button"
+                onClick={() => {
+                  const datosAjustados = {
+                    ...formAsignacion,
+                    fechaInicio: alertaPeriodo.sugerencia.fechaInicio,
+                    fechaFin: alertaPeriodo.sugerencia.fechaFin
+                  };
+                  setFormAsignacion(datosAjustados);
+                  confirmarGuardadoAsignacion(datosAjustados);
+                }}
+                className="px-3 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-semibold cursor-pointer transition"
+              >
+                Ajustar al primer y último día de clase
+              </button>
+            )}
           </div>
         </div>
       )}
