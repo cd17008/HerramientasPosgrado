@@ -1,6 +1,23 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+
+//Import librerias, elementos visuales 
 import toast, { Toaster } from 'react-hot-toast';
-import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
+import {
+  Calendar as IconCalendar,
+  Clock as IconClock,
+  Plus as IconPlus,
+  Pencil as IconEdit,
+  Trash2 as IconTrash,
+  Download as IconDownload,
+  Upload as IconUpload,
+  TriangleAlert as IconAlert,
+  Check as IconCheck,
+  Layers as IconLayers,
+  X as IconX,
+  List as IconList,
+} from 'lucide-react';
+
+//Import de constantes
 import {
   DIAS_SEMANA,
   FUNCION_COORDINADOR_DEFAULT,
@@ -17,34 +34,15 @@ import {
   formatearRangoFechasTexto
 } from './utils/dateUtils';
 
-import {
-  Calendar as IconCalendar,
-  Clock as IconClock,
-  Plus as IconPlus,
-  Pencil as IconEdit,
-  Trash2 as IconTrash,
-  Download as IconDownload,
-  Upload as IconUpload,
-  TriangleAlert as IconAlert,
-  Check as IconCheck,
-  Layers as IconLayers,
-  X as IconX,
-  List as IconList,
-} from 'lucide-react';
-
-import {
-  getProgramas, getProgramaPorNombre, getAsignaturasPorPrograma,
-  getDocentes, getDocentePorNombre, getCategoriasDocente, getTasaPorCategoria,
-  getNacionalidades, getGrados, getClasificaciones, getEdiciones,
-  getCohortesPorPrograma, sugerirFactorSobrecupo
-} from './services/catalogService';
-
+//Import de servicios propios
+import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
 import { generarCorreoWord } from './services/word/buildCorreoWordService';
 
 
 export default function DocenteScheduleTool() {
-  const [docenteNombre, setDocenteNombre] = useState('LEONARDO JAVIER MENDOZA BLANCO');
 
+  //Estado inicial DEMO
+  const [docenteNombre, setDocenteNombre] = useState('LEONARDO JAVIER MENDOZA BLANCO');
   const [asignaciones, setAsignaciones] = useState([
     {
       id: 'asig-1',
@@ -74,7 +72,6 @@ export default function DocenteScheduleTool() {
       excepciones: {}
     }
   ]);
-
   const [activeTab, setActiveTab] = useState('calendario');
   const [asignacionSeleccionadaId, setAsignacionSeleccionadaId] = useState('asig-1');
   const [seleccionadasResumen, setSeleccionadasResumen] = useState(['asig-1', 'asig-2']);
@@ -94,7 +91,6 @@ export default function DocenteScheduleTool() {
   // Modales
   const [modalAsignacionAbierto, setModalAsignacionAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
-  // Estado para modal de confirmación personalizado (reemplazo de window.confirm)
   const [modalConfirmacion, setModalConfirmacion] = useState({
     abierto: false,
     titulo: '',
@@ -1915,8 +1911,8 @@ export default function DocenteScheduleTool() {
                       <label
                         key={opcion.valor}
                         className={`flex flex-col justify-between p-2.5 rounded-lg border cursor-pointer transition ${seleccionado
-                            ? 'border-indigo-600 bg-indigo-50/60 text-slate-900 ring-1 ring-indigo-600/20'
-                            : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                          ? 'border-indigo-600 bg-indigo-50/60 text-slate-900 ring-1 ring-indigo-600/20'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                           }`}
                       >
                         <div className="flex items-center justify-between gap-1.5 mb-1">
@@ -2029,8 +2025,8 @@ export default function DocenteScheduleTool() {
                 onClick={guardarExcepcion}
                 disabled={rangoHorarioInvalido}
                 className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${rangoHorarioInvalido
-                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
                   }`}
               >
                 Aplicar Ajuste
