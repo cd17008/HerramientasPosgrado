@@ -1,6 +1,26 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
+import { useState, useMemo, useRef, useEffect } from 'react';
+
+//Import librerias, elementos visuales 
+import toast, { Toaster } from 'react-hot-toast';
+import {
+  Calendar as IconCalendar,
+  Clock as IconClock,
+  Plus as IconPlus,
+  Pencil as IconEdit,
+  Trash2 as IconTrash,
+  Download as IconDownload,
+  Upload as IconUpload,
+  TriangleAlert as IconAlert,
+  Check as IconCheck,
+  Layers as IconLayers,
+  X as IconX,
+  List as IconList,
+} from 'lucide-react';
+
+//Import de constantes
 import {
   DIAS_SEMANA,
   FUNCION_COORDINADOR_DEFAULT,
@@ -17,36 +37,17 @@ import {
   formatearRangoFechasTexto
 } from './utils/dateUtils';
 
-import {
-  Calendar as IconCalendar,
-  Clock as IconClock,
-  Plus as IconPlus,
-  Pencil as IconEdit,
-  Trash2 as IconTrash,
-  Download as IconDownload,
-  Upload as IconUpload,
-  TriangleAlert as IconAlert,
-  Check as IconCheck,
-  Layers as IconLayers,
-  X as IconX,
-  FileText as IconDocument
-} from 'lucide-react';
-
-import {
-  getProgramas, getProgramaPorNombre, getAsignaturasPorPrograma,
-  getDocentes, getDocentePorNombre, getCategoriasDocente, getTasaPorCategoria,
-  getNacionalidades, getGrados, getClasificaciones, getEdiciones,
-  getCohortesPorPrograma, getTiposContratoEP, sugerirFactorSobrecupo
-} from './services/catalogService';
-
+//Import de servicios propios
+import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
 import { generarCorreoWord } from './services/word/buildCorreoWordService';
 import { generarInformeMaestriasWord } from './services/word/informe/buildInformeMaestrias';
 
 
 
 export default function DocenteScheduleTool() {
-  const [docenteNombre, setDocenteNombre] = useState('LEONARDO JAVIER MENDOZA BLANCO');
 
+  //Estado inicial DEMO
+  const [docenteNombre, setDocenteNombre] = useState('LEONARDO JAVIER MENDOZA BLANCO');
   const [asignaciones, setAsignaciones] = useState([
     {
       id: 'asig-1',
@@ -76,13 +77,12 @@ export default function DocenteScheduleTool() {
       excepciones: {}
     }
   ]);
-
   const [activeTab, setActiveTab] = useState('calendario');
   const [asignacionSeleccionadaId, setAsignacionSeleccionadaId] = useState('asig-1');
   const [seleccionadasResumen, setSeleccionadasResumen] = useState(['asig-1', 'asig-2']);
   const [diasFiltro, setDiasFiltro] = useState([]);
   const currentAsig = asignaciones.find((a) => a.id === asignacionSeleccionadaId) || asignaciones[0] || null;
-
+  const DIAS_CABECERA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
   const programasCatalogo = getProgramas();
   const docentesCatalogo = getDocentes();
   const opcionesCargo = ['DOCENTE DE MAESTRIA', 'DOCENTE DE DIPLOMADO', 'COORDINADOR DE MAESTRIA', 'COORDINADOR DE DIPLOMADO'];
@@ -120,13 +120,13 @@ export default function DocenteScheduleTool() {
 
 
   useEffect(() => {
-    if (currentAsig?.dias) {
+    if  (currentAsig?.dias) {
       const diasActivos = DIAS_SEMANA
         .filter((d) => currentAsig.dias[d.id]?.activo)
         .map((d) => d.id);
       setDiasFiltro(diasActivos);
     }
-  }, [asignacionSeleccionadaId]);
+  }, [currentAsig?.id]);
 
   // Modales
   const [modalAsignacionAbierto, setModalAsignacionAbierto] = useState(false);
@@ -138,6 +138,8 @@ export default function DocenteScheduleTool() {
     mensaje: '',
     textoBoton: 'Confirmar',
     tipo: 'peligro',
+    onConfirmar: () => { }
+    tipo: 'peligro', // 'peligro' | 'info'
     onConfirmar: () => { }
   });
 
@@ -187,6 +189,7 @@ export default function DocenteScheduleTool() {
   const [requerimientoForm, setRequerimientoForm] = useState(null);
   const [modalCargarAbierto, setModalCargarAbierto] = useState(false);
   const [estaArrastrando, setEstaArrastrando] = useState(false);
+  const [vistaSesiones, setVistaSesiones] = useState('cuadricula');
 
   // Referencia de archivo para importar JSON
   const fileInputRef = useRef(null);
@@ -264,42 +267,69 @@ export default function DocenteScheduleTool() {
   }, [asignaciones]);
 
   // Auditoría de Choques
-  const mapaDeChoques = useMemo(() => {
-    const choques = {};
-    const porFecha = {};
+  //Choques unicos
+  const { mapaDeChoques, listaChoquesUnicos } = useMemo(() => {
+    const mapa = {};
+    const unicos = [];
+    const paresVistos = new Set();
 
-    todasLasSesiones
-      .filter((s) => s.activa)
-      .forEach((s) => {
-        if (!porFecha[s.fecha]) porFecha[s.fecha] = [];
-        porFecha[s.fecha].push(s);
-      });
+    const sesionesActivas = todasLasSesiones.filter((s) => s.activa && !s.esAsueto);
 
-    Object.entries(porFecha).forEach(([fecha, sesList]) => {
-      if (sesList.length > 1) {
-        for (let i = 0; i < sesList.length; i++) {
-          for (let j = i + 1; j < sesList.length; j++) {
-            const s1 = sesList[i];
-            const s2 = sesList[j];
+    for (let i = 0; i < sesionesActivas.length; i++) {
+      const s1 = sesionesActivas[i];
 
-            const start1 = timeToMinutes(s1.horaInicio);
-            const end1 = timeToMinutes(s1.horaFin);
-            const start2 = timeToMinutes(s2.horaInicio);
-            const end2 = timeToMinutes(s2.horaFin);
+      for (let j = i + 1; j < sesionesActivas.length; j++) {
+        const s2 = sesionesActivas[j];
 
-            if (Math.max(start1, start2) < Math.min(end1, end2)) {
-              if (!choques[s1.id]) choques[s1.id] = [];
-              if (!choques[s2.id]) choques[s2.id] = [];
+        // Solo comparar sesiones del mismo día y de asignaciones distintas
+        if (s1.fecha !== s2.fecha || s1.asignacionId === s2.asignacionId) continue;
 
-              choques[s1.id].push({ contra: s2.materia, rango: `${s2.horaInicio} - ${s2.horaFin}` });
-              choques[s2.id].push({ contra: s1.materia, rango: `${s1.horaInicio} - ${s1.horaFin}` });
+        // Verificar solapamiento de horas (en minutos o cadenas HH:MM)
+        const haySolapamiento = s1.horaInicio < s2.horaFin && s2.horaInicio < s1.horaFin;
+        if (!haySolapamiento) continue;
+
+        // 1. Mantener el mapa bidireccional para colorear ambas tarjetas/celdas en el calendario
+        if (!mapa[s1.id]) mapa[s1.id] = [];
+        mapa[s1.id].push({
+          contra: s2.materia,
+          rango: `${s2.horaInicio} - ${s2.horaFin}`
+        });
+
+        if (!mapa[s2.id]) mapa[s2.id] = [];
+        mapa[s2.id].push({
+          contra: s1.materia,
+          rango: `${s1.horaInicio} - ${s1.horaFin}`
+        });
+
+        // 2. Registrar el choque UNA SOLA VEZ para el reporte de Auditoría
+        const clavePar = [s1.id, s2.id].sort().join('__');
+        if (!paresVistos.has(clavePar)) {
+          paresVistos.add(clavePar);
+          unicos.push({
+            id: clavePar,
+            fecha: s1.fecha,
+            nombreDia: s1.nombreDia,
+            asignacionA: {
+              id: s1.asignacionId,
+              materia: s1.materia,
+              programa: s1.programaNombre || '',
+              horario: `${s1.horaInicio} - ${s1.horaFin}`
+            },
+            asignacionB: {
+              id: s2.asignacionId,
+              materia: s2.materia,
+              programa: s2.programaNombre || '',
+              horario: `${s2.horaInicio} - ${s2.horaFin}`
             }
-          }
+          });
         }
       }
-    });
+    }
 
-    return choques;
+    // Ordenar cronológicamente
+    unicos.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    return { mapaDeChoques: mapa, listaChoquesUnicos: unicos };
   }, [todasLasSesiones]);
 
   // Resumen de Asignaciones
@@ -361,6 +391,7 @@ export default function DocenteScheduleTool() {
         setAsignaciones([]);
         setAsignacionSeleccionadaId(null);
         setSeleccionadasResumen([]);
+        setRequerimientoForm(null);
         toast.success('Se han limpiado todas las asignaciones.');
       }
     });
@@ -432,6 +463,7 @@ export default function DocenteScheduleTool() {
   };
 
   const handleAbrirCrear = () => {
+    setAlertaPeriodo(null);
     setModoEdicion(false);
     setFormAsignacion({
       id: `asig-${Date.now()}`,
@@ -452,10 +484,12 @@ export default function DocenteScheduleTool() {
       }
     });
 
+
     setModalAsignacionAbierto(true);
   };
 
   const handleAbrirEditar = (asig) => {
+    setAlertaPeriodo(null);
     setModoEdicion(true);
     setFormAsignacion({
       id: asig.id,
@@ -494,6 +528,7 @@ export default function DocenteScheduleTool() {
     toast.success(modoEdicion ? 'Asignación actualizada' : 'Asignación creada exitosamente');
     setModalAsignacionAbierto(false);
   };
+  };
 
   const handleEliminarAsignacion = (idAEliminar) => {
     abrirConfirmacion({
@@ -517,6 +552,9 @@ export default function DocenteScheduleTool() {
   const descargarRespaldoJSON = (datosPersonalizados = null) => {
     const payload = datosPersonalizados || {
       docenteNombre,
+      docenteInfo: requerimientoForm?.docenteInfo || null,
+      programas: requerimientoForm?.programas || [],
+      requerimientoForm,
       asignaciones,
       seleccionadasResumen,
       fechaExportacion: new Date().toISOString()
@@ -547,6 +585,16 @@ export default function DocenteScheduleTool() {
       try {
         const datos = JSON.parse(event.target.result);
         if (datos.docenteNombre !== undefined) setDocenteNombre(datos.docenteNombre);
+
+        if (datos.requerimientoForm) {
+          setRequerimientoForm(datos.requerimientoForm);
+        } else if (datos.docenteInfo || Array.isArray(datos.programas)) {
+          setRequerimientoForm({
+            docenteInfo: datos.docenteInfo || {},
+            programas: datos.programas || []
+          });
+        }
+
         if (Array.isArray(datos.asignaciones)) {
           setAsignaciones(datos.asignaciones);
           if (datos.asignaciones.length > 0) {
@@ -600,15 +648,15 @@ export default function DocenteScheduleTool() {
       if (!mapaProgramas[pNombre]) {
         mapaProgramas[pNombre] = {
           nombre: pNombre,
-          tipo: asig.programaTipo || 'MAESTRIA',
-          solicitudAprobacion: '',
-          acuerdoAprobacion: '',
+          codigo: asig.programaCodigo || '',
+          tipo: asig.programaTipo || (esDip ? 'DIPLOMADO' : 'MAESTRIA'),
+          solicitudAprobacion: asig.numeroSolicitud || '',
+          acuerdoImparticion: asig.numeroAprobacion || '',
           edicionCohorte: esDip ? 'EDICION II 2026' : '7° COHORTE',
-          coordinador: esDip ? 'MSC. VIRGILIO REYES' : 'MSC. JORGE ALBERTO ZETINO CHICAS',
+          coordinador: '',
           clasificacionProyecto: 'A',
-          // Alumnos y factor se controlan ahora a nivel de programa
-          alumnosInscritos: esDip ? 46 : 10,
-          factorSobrecupo: 1.25,
+          alumnosInscritos: 0,
+          factorSobrecupo: 1.0,
           asignaciones: []
         };
       }
@@ -629,25 +677,62 @@ export default function DocenteScheduleTool() {
       });
     });
 
+    const prevForm = requerimientoForm;
+    const prevDocente = prevForm?.docenteInfo || {};
+    const prevProgramasMap = new Map(
+      (prevForm?.programas || []).map((p) => [p.nombre, p])
+    );
+
+    const programasActualizados = Object.values(mapaProgramas).map((progNuevo) => {
+      const progPrevio = prevProgramasMap.get(progNuevo.nombre);
+      if (!progPrevio) return progNuevo;
+
+      const prevAsigsMap = new Map(
+        (progPrevio.asignaciones || []).map((a) => [a.asigId || a.id, a])
+      );
+
+      return {
+        ...progNuevo,
+        codigo: progPrevio.codigo ?? progNuevo.codigo,
+        solicitudAprobacion: progPrevio.solicitudAprobacion ?? progNuevo.solicitudAprobacion,
+        acuerdoImparticion: progPrevio.acuerdoImparticion ?? progNuevo.acuerdoImparticion,
+        edicionCohorte: progPrevio.edicionCohorte ?? progNuevo.edicionCohorte,
+        coordinador: progPrevio.coordinador ?? progNuevo.coordinador,
+        clasificacionProyecto: progPrevio.clasificacionProyecto ?? progNuevo.clasificacionProyecto,
+        alumnosInscritos: progPrevio.alumnosInscritos ?? progNuevo.alumnosInscritos,
+        factorSobrecupo: progPrevio.factorSobrecupo ?? progNuevo.factorSobrecupo,
+        asignaciones: progNuevo.asignaciones.map((asigNueva) => {
+          const asigPrevia = prevAsigsMap.get(asigNueva.asigId || asigNueva.id);
+          if (!asigPrevia) return asigNueva;
+          return {
+            ...asigNueva,
+            cargo: asigPrevia.cargo ?? asigNueva.cargo,
+            funciones: asigPrevia.funciones ?? asigNueva.funciones,
+            moduloCiclo: asigPrevia.moduloCiclo ?? asigNueva.moduloCiclo,
+            pagoPorHora: asigPrevia.pagoPorHora ?? asigNueva.pagoPorHora
+          };
+        })
+      };
+    });
+
     setRequerimientoForm({
       docenteInfo: {
-        nombreCompleto: docenteNombre,
         tipoContrato: 'SERVICIOS PROFESIONALES NO PERSONALES',
         tipoContratacion: 'TIEMPO NORMAL',
-        profesion: 'DOCTOR',
-        nacionalidad: 'NICARAGUENSE',
-        correo: 'leonardo.mendoza@ues.edu.sv',
+        profesion: '',
+        nacionalidad: 'SALVADOREÑA',
+        correo: '',
         modalidadServicio: 'EN LINEA',
-        // Calificación docente y pago por hora van centralizados aquí
         calificacionDocente: 'F6',
         pagoPorHora: 22.50,
         sueldoNominal: 1200.00,
         porcentajePago: 13,
-        cantidadMeses: 1
+        cantidadMeses: 1,
+        ...prevDocente,
+        nombreCompleto: docenteNombre || prevDocente.nombreCompleto || ''
       },
-      programas: Object.values(mapaProgramas)
+      programas: programasActualizados
     });
-
     setModalRequerimientoAbierto(true);
   };
 
@@ -659,10 +744,27 @@ export default function DocenteScheduleTool() {
     const sesionesFiltradas = todasLasSesiones.filter((s) => seleccionadasResumen.includes(s.asignacionId));
 
     // 1. Descarga del Excel con las 2 hojas (Requerimiento + Horarios)
+    // Vincular el nombre del programa y módulo/ciclo editados en el modal con las asignaciones de horarios
+    const mapaModalPorAsigId = new Map();
+    requerimientoForm.programas.forEach((prog) => {
+      (prog.asignaciones || []).forEach((aModal) => {
+        mapaModalPorAsigId.set(aModal.asigId || aModal.idOriginal || aModal.id, {
+          programaNombre: prog.nombre,
+          codigoPrograma: prog.codigo,
+          moduloCiclo: aModal.moduloCiclo
+        });
+      });
+    });
+
+    const asignacionesEnriquecidas = asignacionesFiltradas.map((asig) => ({
+      ...asig,
+      ...(mapaModalPorAsigId.get(asig.id) || {})
+    }));
+
     generarExpedienteCompletoExcel({
       docenteInfo: requerimientoForm.docenteInfo,
       programas: requerimientoForm.programas,
-      asignacionesHorarios: asignacionesFiltradas,
+      asignacionesHorarios: asignacionesEnriquecidas,
       sesionesHorarios: sesionesFiltradas
     });
 
@@ -678,6 +780,7 @@ export default function DocenteScheduleTool() {
       docenteNombre,
       docenteInfo: requerimientoForm.docenteInfo,
       programas: requerimientoForm.programas,
+      requerimientoForm,
       asignaciones,
       seleccionadasResumen,
       fechaExportacion: new Date().toISOString()
@@ -686,15 +789,37 @@ export default function DocenteScheduleTool() {
     setModalRequerimientoAbierto(false);
   };
 
+  // 1. Validación en tiempo real para el modal de excepción diaria
+  const configOriginalDiaModal = modalExcepcion
+    ? currentAsig?.dias?.[modalExcepcion.diaSemanaId]
+    : null;
+
+  const rangoHorarioInvalido =
+    Boolean(modalExcepcion) &&
+    excepForm.tipo === 'MODIFICAR' &&
+    (!excepForm.horaInicio ||
+      !excepForm.horaFin ||
+      timeToMinutes(excepForm.horaFin) <= timeToMinutes(excepForm.horaInicio));
+
+  const coincideConHorarioOriginal =
+    Boolean(modalExcepcion) &&
+    excepForm.tipo === 'MODIFICAR' &&
+    !rangoHorarioInvalido &&
+    Boolean(configOriginalDiaModal?.activo) &&
+    excepForm.horaInicio === configOriginalDiaModal.horaInicio &&
+    excepForm.horaFin === configOriginalDiaModal.horaFin;
+
+  // 2. Función de guardado con normalización automática
   const guardarExcepcion = () => {
-    if (!excepForm.fecha) return;
+    if (!excepForm.fecha || !modalExcepcion || rangoHorarioInvalido) return;
 
     setAsignaciones((prev) =>
       prev.map((asig) => {
         if (asig.id !== asignacionSeleccionadaId) return asig;
         const nuevasExcepciones = { ...(asig.excepciones || {}) };
 
-        if (excepForm.tipo === 'RESET') {
+        // Si elige RESET o si ingresó el mismo horario semanal original, se guarda como sesión normal
+        if (excepForm.tipo === 'RESET' || coincideConHorarioOriginal) {
           delete nuevasExcepciones[excepForm.fecha];
         } else {
           nuevasExcepciones[excepForm.fecha] = {
@@ -707,15 +832,170 @@ export default function DocenteScheduleTool() {
         return { ...asig, excepciones: nuevasExcepciones };
       })
     );
+
     setModalExcepcion(null);
   };
 
   const cantidadChoquesTotales = Object.keys(mapaDeChoques).length;
 
+  const mesesCalendario = useMemo(() => {
+    if (!currentAsig) return [];
+
+    const sesionesAsig = todasLasSesiones.filter(
+      (s) => s.asignacionId === currentAsig.id
+    );
+
+    // 1. Agrupar sesiones por clave 'YYYY-MM'
+    const grupos = {};
+    sesionesAsig.forEach((s) => {
+      const mesKey = s.fecha.substring(0, 7);
+      if (!grupos[mesKey]) grupos[mesKey] = [];
+      grupos[mesKey].push(s);
+    });
+
+    // 2. Construir la cuadrícula de celdas para cada mes
+    return Object.entries(grupos)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([mesKey, sesionesMes]) => {
+        const [year, month] = mesKey.split('-').map(Number);
+        const primerDiaMes = new Date(year, month - 1, 1);
+        const totalDiasMes = new Date(year, month, 0).getDate();
+
+        const offsetInicio = primerDiaMes.getDay();
+
+        // Indexar sesiones del mes por fecha 'YYYY-MM-DD' para acceso O(1)
+        const mapaSesiones = {};
+        sesionesMes.forEach((s) => {
+          mapaSesiones[s.fecha] = s;
+        });
+
+        const celdas = [];
+
+        // Celdas vacías antes del día 1
+        for (let i = 0; i < offsetInicio; i++) {
+          celdas.push({ tipo: 'vacio', key: `empty-${mesKey}-${i}` });
+        }
+
+        // Celdas de cada día del mes (1 al 28/30/31)
+        for (let dia = 1; dia <= totalDiasMes; dia++) {
+          const fechaIso = `${year}-${String(month).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+          const fueraDePeriodo =
+            (currentAsig.fechaInicio && fechaIso < currentAsig.fechaInicio) ||
+            (currentAsig.fechaFin && fechaIso > currentAsig.fechaFin);
+
+          celdas.push({
+            tipo: 'dia',
+            key: fechaIso,
+            numeroDia: dia,
+            fechaIso,
+            fueraDePeriodo,
+            sesion: mapaSesiones[fechaIso] || null
+          });
+        }
+
+        const nombreMes = primerDiaMes.toLocaleString('es-ES', {
+          month: 'long',
+          year: 'numeric'
+        });
+
+        return {
+          mesKey,
+          titulo: nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1),
+          celdas
+        };
+      });
+  }, [todasLasSesiones, currentAsig]);
+
+  const fechaTieneAsignacion = (fechaIso, diasConfig) => {
+    if (!fechaIso || !diasConfig) return false;
+    const [y, m, d] = fechaIso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const dayOfWeek = dt.getDay();
+    return Boolean(diasConfig[dayOfWeek]?.activo);
+  };
+
+  const calcularPeriodoAjustado = (fechaInicio, fechaFin, diasConfig) => {
+    if (!fechaInicio || !fechaFin || fechaInicio > fechaFin) return null;
+
+    const [sy, sm, sd] = fechaInicio.split('-').map(Number);
+    const [ey, em, ed] = fechaFin.split('-').map(Number);
+    let current = new Date(sy, sm - 1, sd);
+    const end = new Date(ey, em - 1, ed);
+
+    let primeraFechaValida = null;
+    let ultimaFechaValida = null;
+
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      if (diasConfig[dayOfWeek]?.activo) {
+        const iso = formatDateIso(current);
+        if (!primeraFechaValida) primeraFechaValida = iso;
+        ultimaFechaValida = iso;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    return primeraFechaValida && ultimaFechaValida
+      ? { fechaInicio: primeraFechaValida, fechaFin: ultimaFechaValida }
+      : null;
+  };
+
+  const [alertaPeriodo, setAlertaPeriodo] = useState(null);
+
+  // Función que persiste la asignación (creación o edición)
+  const confirmarGuardadoAsignacion = (datosAGuardar) => {
+    setAsignaciones((prev) => {
+      const existe = prev.some((a) => a.id === datosAGuardar.id);
+      if (existe) {
+        return prev.map((a) => (a.id === datosAGuardar.id ? { ...a, ...datosAGuardar } : a));
+      }
+      return [...prev, { ...datosAGuardar, excepciones: {} }];
+    });
+
+    setAsignacionSeleccionadaId(datosAGuardar.id);
+    setAlertaPeriodo(null);
+    setModalAsignacionAbierto(false); // O el estado con el que cierras tu modal de asignación
+  };
+
+  // Validación previa al guardar
+  const handleGuardarAsignacion = (e) => {
+    if (e) e.preventDefault();
+
+    const tieneAlgunDiaActivo = Object.values(formAsignacion.dias || {}).some((d) => d?.activo);
+    const inicioValido = fechaTieneAsignacion(formAsignacion.fechaInicio, formAsignacion.dias);
+    const finValido = fechaTieneAsignacion(formAsignacion.fechaFin, formAsignacion.dias);
+
+    // Si hay días configurados, pero la fecha de inicio o de fin no cae en ninguno de ellos
+    if (tieneAlgunDiaActivo && (!inicioValido || !finValido)) {
+      const [sy, sm, sd] = formAsignacion.fechaInicio.split('-').map(Number);
+      const [ey, em, ed] = formAsignacion.fechaFin.split('-').map(Number);
+      const diaInicioNombre = DIAS_SEMANA.find((d) => d.id === new Date(sy, sm - 1, sd).getDay())?.nombre;
+      const diaFinNombre = DIAS_SEMANA.find((d) => d.id === new Date(ey, em - 1, ed).getDay())?.nombre;
+
+      const sugerencia = calcularPeriodoAjustado(
+        formAsignacion.fechaInicio,
+        formAsignacion.fechaFin,
+        formAsignacion.dias
+      );
+
+      setAlertaPeriodo({
+        inicioValido,
+        finValido,
+        diaInicioNombre,
+        diaFinNombre,
+        sugerencia
+      });
+      return;
+    }
+
+    // Si ambas fechas coinciden con días asignados, guarda directamente
+    confirmarGuardadoAsignacion(formAsignacion);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-100 text-slate-800 font-sans flex flex-col">
       {/* ENCABEZADO */}
-      <header className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <header className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 z-20">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
@@ -730,14 +1010,7 @@ export default function DocenteScheduleTool() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleDescargarInformePrueba}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors shadow-sm">
-            <IconDocument className="w-3.5 h-3.5" />
-            Descargar Informe de Actividad
-          </button>
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleAbrirModalRequerimiento}
@@ -774,7 +1047,7 @@ export default function DocenteScheduleTool() {
             {cantidadChoquesTotales > 0 ? (
               <div className="bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5">
                 <IconAlert className="w-3.5 h-3.5 text-red-600" />
-                <span>{cantidadChoquesTotales} Choque(s)</span>
+                <span>{listaChoquesUnicos.length} Choque(s)</span>
               </div>
             ) : (
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1">
@@ -789,8 +1062,8 @@ export default function DocenteScheduleTool() {
       {/* CONTENEDOR PRINCIPAL */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Barra Lateral Izquierda */}
-        <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-4 space-y-4 flex-shrink-0">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+        <aside className="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col p-4 space-y-4 flex-shrink-0 overflow-hidden">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200 flex-shrink-0">
             <div className="flex items-center gap-1.5 text-slate-800">
               <IconLayers className="w-4 h-4 text-slate-600" />
               <h2 className="text-sm font-bold uppercase tracking-wider">Programas y Asignaciones</h2>
@@ -803,7 +1076,7 @@ export default function DocenteScheduleTool() {
           <button
             type="button"
             onClick={handleAbrirCrear}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
+            className="flex-shrink-0 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
           >
             <IconPlus className="w-3.5 h-3.5" />
             Nueva Asignación
@@ -895,8 +1168,8 @@ export default function DocenteScheduleTool() {
         </aside>
 
         {/* Panel Central */}
-        <main className="flex-1 p-6 overflow-y-auto space-y-5">
-          <div className="flex border-b border-slate-200">
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-100">
+          <div className="flex-shrink-0 px-6 pt-5 bg-slate-100 z-10">
             <button
               type="button"
               onClick={() => setActiveTab('calendario')}
@@ -926,408 +1199,607 @@ export default function DocenteScheduleTool() {
                 }`}
             >
               <span>Auditoría de Choques</span>
-              {cantidadChoquesTotales > 0 && (
+              {listaChoquesUnicos.length > 0 && (
                 <span className="px-1.5 py-0.2 bg-red-600 text-white rounded-full text-[10px] font-bold">
-                  {cantidadChoquesTotales}
+                  {listaChoquesUnicos.length}
                 </span>
               )}
             </button>
           </div>
+          <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5 space-y-5">
 
-          {!currentAsig && (
-            <div className="bg-white border border-dashed border-slate-300 rounded p-12 text-center space-y-3">
-              <p className="text-sm font-semibold text-slate-700">No hay materias asignadas</p>
-              <button
-                type="button"
-                onClick={handleAbrirCrear}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded cursor-pointer transition-colors"
-              >
-                + Crear Asignación
-              </button>
-            </div>
-          )}
 
-          {/* TAB 1: Fechas y Sesiones */}
-          {currentAsig && activeTab === 'calendario' && (
-            <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
-                <div>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
-                    {currentAsig.programaTipo}: {currentAsig.programaNombre}
-                  </span>
-                  <h3 className="text-base font-bold text-slate-900 mt-1">
-                    {currentAsig.materia}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Vigencia: {formatDateDDMMYYYY(currentAsig.fechaInicio)} al {formatDateDDMMYYYY(currentAsig.fechaFin)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span> Normal
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Modificado
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-blue-500"></span> Asueto UES
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-red-600"></span> Choque
-                  </span>
-                </div>
+            {!currentAsig && (
+              <div className="bg-white border border-dashed border-slate-300 rounded p-12 text-center space-y-3">
+                <p className="text-sm font-semibold text-slate-700">No hay materias asignadas</p>
+                <button
+                  type="button"
+                  onClick={handleAbrirCrear}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded cursor-pointer transition-colors"
+                >
+                  + Crear Asignación
+                </button>
               </div>
+            )}
 
-              {/* Barra de Filtro por Días de la Semana */}
-              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-semibold text-slate-700 mr-1">Filtrar días:</span>
-                  {DIAS_SEMANA.map((dia) => {
-                    const tieneAsignacion = Boolean(currentAsig?.dias?.[dia.id]?.activo);
-                    const estaSeleccionado = diasFiltro.includes(dia.id);
+            {/* TAB 1: Fechas y Sesiones */}
+            {currentAsig && activeTab === 'calendario' && (
+              <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
+                {currentAsig && (
+                  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
 
-                    return (
-                      <button
-                        key={dia.id}
-                        type="button"
-                        onClick={() => {
-                          setDiasFiltro((prev) =>
-                            prev.includes(dia.id)
-                              ? prev.filter((id) => id !== dia.id)
-                              : [...prev, dia.id]
-                          );
-                        }}
-                        className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${estaSeleccionado
-                          ? 'bg-slate-900 text-white border-slate-900'
-                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
-                          }`}
-                      >
-                        <span>{dia.nombre}</span>
-                        {tieneAsignacion && (
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
-                              }`}
-                            title="Tiene horario asignado"
-                          />
+                    {/* ENCABEZADO ÚNICO: Datos de la Asignación + Leyenda + Selector Calendario/Lista */}
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                      {/* Izquierda: Programa, Asignatura y Vigencia */}
+                      <div>
+                        {currentAsig.programaNombre && (
+                          <span className="inline-block px-2 py-0.5 mb-1.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
+                            {currentAsig.programaNombre}
+                          </span>
                         )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        <h2 className="text-lg font-bold text-slate-900 uppercase">
+                          {currentAsig.materia}
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Vigencia: {formatDateDDMMYYYY(currentAsig.fechaInicio)} al {formatDateDDMMYYYY(currentAsig.fechaFin)}
+                        </p>
+                      </div>
 
-                <div className="flex items-center gap-2 text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => setDiasFiltro(DIAS_SEMANA.map((d) => d.id))}
-                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                  >
-                    Ver todos
-                  </button>
-                  <span className="text-slate-300">|</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const activos = DIAS_SEMANA
-                        .filter((d) => currentAsig?.dias?.[d.id]?.activo)
-                        .map((d) => d.id);
-                      setDiasFiltro(activos);
-                    }}
-                    className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                  >
-                    Días con asignación
-                  </button>
-                </div>
-              </div>
+                      {/* Derecha: Leyenda y Switcher (visible solo en la pestaña de Fechas y Sesiones) */}
+                      {activeTab === 'calendario' && (
+                        <div className="flex flex-wrap items-center gap-4">
+                          {/* Leyenda de estados */}
+                          <div className="flex flex-wrap items-center gap-3 text-xs">
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Normal
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Modificado
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Asueto UES
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-600">
+                              <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Choque
+                            </span>
+                          </div>
 
-              <div className="overflow-x-auto border border-slate-200 rounded max-h-[500px]">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-50 sticky top-0 z-10 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-3">Fecha</th>
-                      <th className="py-2.5 px-3">Día</th>
-                      <th className="py-2.5 px-3">Horario</th>
-                      <th className="py-2.5 px-3 text-center">N° Horas</th>
-                      <th className="py-2.5 px-3">Estado / Observación</th>
-                      <th className="py-2.5 px-3 text-right">Ajuste</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {todasLasSesiones
-                      .filter((s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId))
-                      .map((s) => {
-                        const conflicto = mapaDeChoques[s.id];
-                        let filaBg = 'hover:bg-slate-50';
-                        if (s.esAsueto) filaBg = 'bg-blue-50/40 hover:bg-blue-50';
-                        else if (s.estado === 'MODIFICADO') filaBg = 'bg-amber-50/50 hover:bg-amber-50';
-                        else if (s.estado === 'CANCELADO') filaBg = 'bg-slate-100 text-slate-400';
-                        if (conflicto) filaBg = 'bg-red-50 text-red-900';
+                          {/* Selector Calendario / Lista con iconos Lucide */}
+                          <div className="inline-flex rounded-lg bg-slate-100 p-1 text-xs font-medium border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() => setVistaSesiones('cuadricula')}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition cursor-pointer ${vistaSesiones === 'cuadricula'
+                                ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                                : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                              <IconCalendar className="w-3.5 h-3.5" />
+                              <span>Calendario</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVistaSesiones('lista')}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition cursor-pointer ${vistaSesiones === 'lista'
+                                ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                                : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                              <IconList className="w-3.5 h-3.5" />
+                              <span>Lista</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                        return (
-                          <tr key={s.id} className={filaBg}>
-                            <td className="py-2 px-3 font-semibold text-slate-900">{formatDateDDMMYYYY(s.fecha)}</td>
-                            <td className="py-2 px-3 text-slate-600">{s.nombreDia}</td>
-                            <td className="py-2 px-3 font-mono text-slate-800">
-                              {s.activa ? `${formatTime12h(s.horaInicio)} a ${formatTime12h(s.horaFin)}` : '—'}
-                            </td>
-                            <td className="py-2 px-3 font-bold text-center text-slate-900">
-                              {s.duracionHoras > 0 ? `${s.duracionHoras.toFixed(1)} h` : '0 h'}
-                            </td>
-                            <td className="py-2 px-3">
-                              {conflicto ? (
-                                <span className="text-red-700 font-semibold flex items-center gap-1">
-                                  <IconAlert className="w-3.5 h-3.5 text-red-600" />
-                                  Choque con: {conflicto.map((c) => `${c.contra} (${c.rango})`).join(', ')}
-                                </span>
-                              ) : s.esAsueto ? (
-                                <span className="text-blue-800 bg-blue-100 px-2 py-0.5 rounded text-[11px] font-medium">
-                                  {s.asuetoNombre}
-                                </span>
-                              ) : s.estado === 'MODIFICADO' ? (
-                                <span className="text-amber-800 bg-amber-100 px-2 py-0.5 rounded text-[11px] font-medium">
-                                  Modificado: {s.excepcion?.motivo || 'Ajuste horario'}
-                                </span>
-                              ) : s.estado === 'CANCELADO' ? (
-                                <span className="text-slate-500 italic">Clase cancelada</span>
-                              ) : (
-                                <span className="text-emerald-700 font-medium">Clase regular</span>
-                              )}
-                            </td>
-                            <td className="py-2 px-3 text-right">
-                              {!s.esAsueto && (
+                    {/* CONTENIDO DE FECHAS Y SESIONES */}
+                    {activeTab === 'calendario' && (
+                      <>
+                        {vistaSesiones === 'cuadricula' ? (
+                          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            {mesesCalendario.map((mes) => (
+                              <div
+                                key={mes.mesKey}
+                                className="border border-slate-200 rounded-lg overflow-hidden bg-white"
+                              >
+                                {/* Título del Mes */}
+                                <div className="bg-slate-800 text-white px-4 py-2 text-sm font-semibold">
+                                  {mes.titulo}
+                                </div>
+
+                                {/* Cabecera Lunes a Domingo */}
+                                <div className="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center text-[11px] font-bold text-slate-600 uppercase">
+                                  {DIAS_CABECERA.map((d) => (
+                                    <div
+                                      key={d}
+                                      className="py-1.5 border-r last:border-r-0 border-slate-200"
+                                    >
+                                      {d}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Celdas de Días */}
+                                <div className="grid grid-cols-7 bg-slate-200 gap-px">
+                                  {mes.celdas.map((celda) => {
+                                    if (celda.tipo === 'vacio') {
+                                      return (
+                                        <div
+                                          key={celda.key}
+                                          className="bg-slate-200/70 min-h-[84px]"
+                                        />
+                                      );
+                                    }
+
+                                    const s = celda.sesion;
+                                    const conflicto = s ? mapaDeChoques[s.id] : null;
+                                    const esInteractivo = !celda.fueraDePeriodo && s && !s.esAsueto;
+
+                                    // Color base: gris más oscuro si está fuera del periodo; blanco si está dentro del periodo sin clase
+                                    let cardStyle = celda.fueraDePeriodo
+                                      ? 'bg-slate-200/75 text-slate-400 select-none'
+                                      : 'bg-white text-slate-500';
+
+                                    if (!celda.fueraDePeriodo && s) {
+                                      if (conflicto)
+                                        cardStyle = 'bg-red-50 text-red-900 hover:bg-red-100';
+                                      else if (s.esAsueto)
+                                        cardStyle = 'bg-blue-50/70 text-blue-800';
+                                      else if (s.estado === 'MODIFICADO')
+                                        cardStyle = 'bg-amber-50 text-amber-900 hover:bg-amber-100';
+                                      else if (s.estado === 'CANCELADO')
+                                        cardStyle = 'bg-slate-100 text-slate-400 hover:bg-slate-200/70';
+                                      else if (s.activa)
+                                        cardStyle = 'bg-emerald-50/60 text-slate-800 hover:bg-emerald-100/70';
+                                    }
+
+                                    return (
+                                      <div
+                                        key={celda.key}
+                                        onClick={() => {
+                                          if (!esInteractivo) return;
+                                          setExcepForm({
+                                            fecha: s.fecha,
+                                            tipo: s.excepcion?.tipo || 'MODIFICAR',
+                                            horaInicio: s.horaInicio || '18:00',
+                                            horaFin: s.horaFin || '21:00',
+                                            motivo: s.excepcion?.motivo || ''
+                                          });
+                                          setModalExcepcion(s);
+                                        }}
+                                        className={`min-h-[84px] p-1.5 flex flex-col justify-between transition ${cardStyle} ${esInteractivo ? 'cursor-pointer' : ''
+                                          }`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span
+                                            className={`text-xs font-bold ${celda.fueraDePeriodo
+                                              ? 'text-slate-400/90'
+                                              : s?.activa
+                                                ? 'text-slate-800'
+                                                : 'text-slate-600'
+                                              }`}
+                                          >
+                                            {celda.numeroDia}
+                                          </span>
+                                          {!celda.fueraDePeriodo && s?.activa && (
+                                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white border border-slate-200 text-indigo-700">
+                                              {s.duracionHoras}h
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {!celda.fueraDePeriodo && s && (
+                                          <div className="mt-1 space-y-0.5 text-[10px] leading-tight">
+                                            {conflicto ? (
+                                              <span
+                                                className="block font-bold text-red-700 truncate"
+                                                title={conflicto.map((c) => c.contra).join(', ')}
+                                              >
+                                                Choque ({s.horaInicio}-{s.horaFin})
+                                              </span>
+                                            ) : s.esAsueto ? (
+                                              <span
+                                                className="block font-medium text-blue-700 line-clamp-2"
+                                                title={s.asuetoNombre}
+                                              >
+                                                {s.asuetoNombre}
+                                              </span>
+                                            ) : s.estado === 'CANCELADO' ? (
+                                              <span className="block italic text-slate-500">Cancelada</span>
+                                            ) : s.activa ? (
+                                              <>
+                                                <span className="block font-mono font-semibold text-slate-700">
+                                                  {s.horaInicio} - {s.horaFin}
+                                                </span>
+                                                {s.estado === 'MODIFICADO' && (
+                                                  <span className="block text-[9px] font-semibold text-amber-700 truncate">
+                                                    Ajustado
+                                                  </span>
+                                                )}
+                                              </>
+                                            ) : null}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* VISTA DE LISTA */
+                          <div className="space-y-4">
+                            {/* Barra de Filtro por Días de la Semana (solo visible en vista de Lista) */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="font-semibold text-slate-700 mr-1">Filtrar días:</span>
+                                {DIAS_SEMANA.map((dia) => {
+                                  const tieneAsignacion = Boolean(currentAsig?.dias?.[dia.id]?.activo);
+                                  const estaSeleccionado = diasFiltro.includes(dia.id);
+
+                                  return (
+                                    <button
+                                      key={dia.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setDiasFiltro((prev) =>
+                                          prev.includes(dia.id)
+                                            ? prev.filter((id) => id !== dia.id)
+                                            : [...prev, dia.id]
+                                        );
+                                      }}
+                                      className={`px-2.5 py-1 rounded text-xs font-medium cursor-pointer border transition-colors inline-flex items-center gap-1.5 ${estaSeleccionado
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                      <span>{dia.nombre}</span>
+                                      {tieneAsignacion && (
+                                        <span
+                                          className={`w-1.5 h-1.5 rounded-full ${estaSeleccionado ? 'bg-emerald-400' : 'bg-emerald-600'
+                                            }`}
+                                          title="Tiene horario asignado"
+                                        />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="flex items-center gap-2 text-[11px]">
+                                <button
+                                  type="button"
+                                  onClick={() => setDiasFiltro(DIAS_SEMANA.map((d) => d.id))}
+                                  className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                                >
+                                  Ver todos
+                                </button>
+                                <span className="text-slate-300">|</span>
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setExcepForm({
-                                      fecha: s.fecha,
-                                      tipo: s.excepcion?.tipo || 'MODIFICAR',
-                                      horaInicio: s.horaInicio || '18:00',
-                                      horaFin: s.horaFin || '21:00',
-                                      motivo: s.excepcion?.motivo || ''
-                                    });
-                                    setModalExcepcion(s);
+                                    const activos = DIAS_SEMANA
+                                      .filter((d) => currentAsig?.dias?.[d.id]?.activo)
+                                      .map((d) => d.id);
+                                    setDiasFiltro(activos);
                                   }}
-                                  className="px-2 py-1 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-[11px] font-semibold cursor-pointer transition-colors"
+                                  className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
                                 >
-                                  {s.excepcion ? 'Editar Ajuste' : 'Cambiar Día'}
+                                  Días con asignación
                                 </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    {todasLasSesiones.filter(
-                      (s) => s.asignacionId === currentAsig.id && diasFiltro.includes(s.diaSemanaId)
-                    ).length === 0 && (
+                              </div>
+                            </div>
+
+                            {/* Tabla de Sesiones Filtradas */}
+                            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead className="bg-slate-100 text-slate-600 uppercase">
+                                  <tr>
+                                    <th className="py-2.5 px-3">Fecha</th>
+                                    <th className="py-2.5 px-3">Día</th>
+                                    <th className="py-2.5 px-3">Horario Aplicado</th>
+                                    <th className="py-2.5 px-3">N° Horas</th>
+                                    <th className="py-2.5 px-3">Estado / Observación</th>
+                                    <th className="py-2.5 px-3 text-right">Acción</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {todasLasSesiones
+                                    .filter(
+                                      (s) =>
+                                        s.asignacionId === currentAsig.id &&
+                                        diasFiltro.includes(s.diaSemanaId)
+                                    )
+                                    .map((s) => {
+                                      const conflicto = mapaDeChoques[s.id];
+
+                                      let filaBg = 'hover:bg-slate-50';
+                                      if (s.esAsueto) filaBg = 'bg-blue-50/50 hover:bg-blue-50';
+                                      else if (s.estado === 'MODIFICADO') filaBg = 'bg-amber-50/50 hover:bg-amber-50';
+                                      else if (s.estado === 'CANCELADO') filaBg = 'bg-slate-100 text-slate-400';
+                                      if (conflicto) filaBg = 'bg-red-50 text-red-900';
+
+                                      return (
+                                        <tr key={s.id} className={filaBg}>
+                                          <td className="py-2 px-3 font-semibold">{formatDateDDMMYYYY(s.fecha)}</td>
+                                          <td className="py-2 px-3">{s.nombreDia}</td>
+                                          <td className="py-2 px-3 font-mono">
+                                            {s.activa ? `${s.horaInicio} - ${s.horaFin}` : '—'}
+                                          </td>
+                                          <td className="py-2 px-3 font-bold">
+                                            {s.duracionHoras > 0 ? `${s.duracionHoras.toFixed(1)} h` : '0 h'}
+                                          </td>
+                                          <td className="py-2 px-3">
+                                            {conflicto ? (
+                                              <span className="text-red-700 font-semibold">
+                                                ⚠️ Choque con: {conflicto.map((c) => `${c.contra} (${c.rango})`).join(', ')}
+                                              </span>
+                                            ) : s.esAsueto ? (
+                                              <span className="text-blue-700 font-medium bg-blue-100 px-2 py-0.5 rounded">
+                                                {s.asuetoNombre}
+                                              </span>
+                                            ) : s.estado === 'MODIFICADO' ? (
+                                              <span className="text-amber-800 font-medium bg-amber-100 px-2 py-0.5 rounded">
+                                                Modificado: {s.excepcion?.motivo || 'Horario Especial'}
+                                              </span>
+                                            ) : s.estado === 'CANCELADO' ? (
+                                              <span className="text-slate-500 italic">Cancelada</span>
+                                            ) : (
+                                              <span className="text-emerald-700">Programada regular</span>
+                                            )}
+                                          </td>
+                                          <td className="py-2 px-3 text-right">
+                                            {!s.esAsueto && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setExcepForm({
+                                                    fecha: s.fecha,
+                                                    tipo: s.excepcion?.tipo || 'MODIFICAR',
+                                                    horaInicio: s.horaInicio || '18:00',
+                                                    horaFin: s.horaFin || '21:00',
+                                                    motivo: s.excepcion?.motivo || ''
+                                                  });
+                                                  setModalExcepcion(s);
+                                                }}
+                                                className="px-2.5 py-1 text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded text-xs font-medium cursor-pointer"
+                                              >
+                                                {s.excepcion ? 'Editar Ajuste' : 'Cambiar Día'}
+                                              </button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+
+                                  {/* Mensaje cuando no hay sesiones para los días seleccionados */}
+                                  {todasLasSesiones.filter(
+                                    (s) =>
+                                      s.asignacionId === currentAsig.id &&
+                                      diasFiltro.includes(s.diaSemanaId)
+                                  ).length === 0 && (
+                                      <tr>
+                                        <td colSpan={6} className="py-8 text-center text-slate-400 italic">
+                                          No hay sesiones programadas para los días seleccionados en el filtro.
+                                        </td>
+                                      </tr>
+                                    )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: Resumen de Horas */}
+            {activeTab === 'metricas' && (
+              <div className="space-y-5">
+                <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">
+                        Recuento Consolidado por Asignación
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto border border-slate-200 rounded">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-slate-400 italic">
-                            No hay sesiones programadas para los días seleccionados en el filtro.
+                          <th className="py-2.5 px-3 w-10 text-center">
+                            <input
+                              type="checkbox"
+                              checked={asignaciones.length > 0 && seleccionadasResumen.length === asignaciones.length}
+                              onChange={() => {
+                                if (seleccionadasResumen.length === asignaciones.length) {
+                                  setSeleccionadasResumen([]);
+                                } else {
+                                  setSeleccionadasResumen(asignaciones.map((a) => a.id));
+                                }
+                              }}
+                              className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                            />
+                          </th>
+                          <th className="py-2.5 px-3">Programa</th>
+                          <th className="py-2.5 px-3">Cargo</th>
+                          <th className="py-2.5 px-3">Asignación</th>
+                          <th className="py-2.5 px-3">Fecha Inicio</th>
+                          <th className="py-2.5 px-3">Fecha Fin</th>
+                          <th className="py-2.5 px-3 text-center">Sesiones</th>
+                          <th className="py-2.5 px-3 text-right">Total Horas</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {resumenPorAsignacion.map((item) => {
+                          const estaMarcada = seleccionadasResumen.includes(item.id);
+
+                          return (
+                            <tr
+                              key={item.id}
+                              className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
+                            >
+                              <td className="py-3 px-3 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={estaMarcada}
+                                  onChange={() => {
+                                    setSeleccionadasResumen((prev) =>
+                                      prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
+                                    );
+                                  }}
+                                  className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                                />
+                              </td>
+                              <td className="py-3 px-3 text-slate-600">
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700 mr-2">
+                                  {item.programaTipo}
+                                </span>
+                                {item.programaNombre}
+                              </td>
+                              <td className="py-3 px-3 text-slate-700 font-medium">
+                                {item.cargo}
+                              </td>
+                              <td className="py-3 px-3 font-semibold text-slate-900">
+                                {item.materia}
+                              </td>
+                              <td className="py-3 px-3 text-slate-600 font-mono">
+                                {formatDateDDMMYYYY(item.fechaInicio)}
+                              </td>
+                              <td className="py-3 px-3 text-slate-600 font-mono">
+                                {formatDateDDMMYYYY(item.fechaFin)}
+                              </td>
+                              <td className="py-3 px-3 text-center font-mono text-slate-700">
+                                {item.totalSesiones} clases
+                              </td>
+                              <td className="py-3 px-3 text-right font-bold text-slate-900">
+                                {item.totalHoras.toFixed(1)} h
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
+                        <tr>
+                          <td colSpan={6} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
+                            Total Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-mono text-xs">
+                            {totalesSeleccionados.totalSesiones} clases
+                          </td>
+                          <td className="py-2.5 px-3 text-right text-xs">
+                            {totalesSeleccionados.totalHoras.toFixed(1)} h
                           </td>
                         </tr>
-                      )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
 
-          {/* TAB 2: Resumen de Horas */}
-          {activeTab === 'metricas' && (
-            <div className="space-y-5">
-              <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                {currentAsig && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                        Distribución por Mes ({currentAsig.materia})
+                      </h4>
+                      <div className="divide-y divide-slate-100 text-xs">
+                        {Object.entries(metricasAsigActiva.porMes).map(([mes, horas]) => (
+                          <div key={mes} className="py-2 flex justify-between items-center">
+                            <span className="font-medium text-slate-700">{mes}</span>
+                            <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                              {horas.toFixed(1)} h
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+                        Distribución por Semana ({currentAsig.materia})
+                      </h4>
+                      <div className="divide-y divide-slate-100 text-xs max-h-[220px] overflow-y-auto pr-1">
+                        {Object.entries(metricasAsigActiva.porSemana).map(([semana, horas]) => (
+                          <div key={semana} className="py-2 flex justify-between items-center">
+                            <span className="text-slate-600">Semana del {formatDateDDMMYYYY(semana)}</span>
+                            <span className="font-mono font-semibold text-slate-900">{horas.toFixed(1)} h</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: Auditoría de Choques */}
+            {activeTab === 'choques' && (
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">
-                      Recuento Consolidado por Asignación
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Selecciona las asignaciones para incluirlas en el cálculo y en el Requerimiento de Contratación.
+                    <h2 className="text-lg font-bold text-slate-900">Auditoría de Choques Horarios</h2>
+                    <p className="text-xs text-slate-500">
+                      Conflictos detectados entre asignaciones en la misma fecha y franja horaria.
                     </p>
                   </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                    {listaChoquesUnicos.length} {listaChoquesUnicos.length === 1 ? 'conflicto' : 'conflictos'}
+                  </span>
                 </div>
 
-                <div className="overflow-x-auto border border-slate-200 rounded">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
-                      <tr>
-                        <th className="py-2.5 px-3 w-10 text-center">
-                          <input
-                            type="checkbox"
-                            checked={asignaciones.length > 0 && seleccionadasResumen.length === asignaciones.length}
-                            onChange={() => {
-                              if (seleccionadasResumen.length === asignaciones.length) {
-                                setSeleccionadasResumen([]);
-                              } else {
-                                setSeleccionadasResumen(asignaciones.map((a) => a.id));
-                              }
-                            }}
-                            className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                          />
-                        </th>
-                        <th className="py-2.5 px-3">Programa</th>
-                        <th className="py-2.5 px-3">Cargo</th>
-                        <th className="py-2.5 px-3">Asignación</th>
-                        <th className="py-2.5 px-3">Fecha Inicio</th>
-                        <th className="py-2.5 px-3">Fecha Fin</th>
-                        <th className="py-2.5 px-3 text-center">Sesiones</th>
-                        <th className="py-2.5 px-3 text-right">Total Horas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {resumenPorAsignacion.map((item) => {
-                        const estaMarcada = seleccionadasResumen.includes(item.id);
-
-                        return (
-                          <tr
-                            key={item.id}
-                            className={`transition-colors ${estaMarcada ? 'bg-slate-50/60' : 'opacity-60 bg-white'}`}
-                          >
-                            <td className="py-3 px-3 text-center">
-                              <input
-                                type="checkbox"
-                                checked={estaMarcada}
-                                onChange={() => {
-                                  setSeleccionadasResumen((prev) =>
-                                    prev.includes(item.id) ? prev.filter((id) => id !== item.id) : [...prev, item.id]
-                                  );
-                                }}
-                                className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
-                              />
+                {listaChoquesUnicos.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-emerald-700 bg-emerald-50/60 border border-emerald-200 rounded-lg">
+                    No se detectaron choques horarios entre las asignaciones programadas.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-slate-100 text-slate-600 uppercase">
+                        <tr>
+                          <th className="py-2.5 px-3">Fecha</th>
+                          <th className="py-2.5 px-3">Día</th>
+                          <th className="py-2.5 px-3">Asignación 1</th>
+                          <th className="py-2.5 px-3">Asignación 2</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {listaChoquesUnicos.map((choque) => (
+                          <tr key={choque.id} className="hover:bg-red-50/40">
+                            <td className="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap">
+                              {formatDateDDMMYYYY(choque.fecha)}
                             </td>
-                            <td className="py-3 px-3 text-slate-600">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider bg-slate-200 text-slate-700 mr-2">
-                                {item.programaTipo}
-                              </span>
-                              {item.programaNombre}
+                            <td className="py-2.5 px-3 text-slate-600">{choque.nombreDia}</td>
+                            <td className="py-2.5 px-3">
+                              <div className="font-semibold text-slate-900">{choque.asignacionA.materia}</div>
+                              <div className="font-mono text-[11px] text-red-700 font-semibold">
+                                {choque.asignacionA.horario}
+                              </div>
                             </td>
-                            <td className="py-3 px-3 text-slate-700 font-medium">
-                              {item.cargo}
-                            </td>
-                            <td className="py-3 px-3 font-semibold text-slate-900">
-                              {item.materia}
-                            </td>
-                            <td className="py-3 px-3 text-slate-600 font-mono">
-                              {formatDateDDMMYYYY(item.fechaInicio)}
-                            </td>
-                            <td className="py-3 px-3 text-slate-600 font-mono">
-                              {formatDateDDMMYYYY(item.fechaFin)}
-                            </td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-700">
-                              {item.totalSesiones} clases
-                            </td>
-                            <td className="py-3 px-3 text-right font-bold text-slate-900">
-                              {item.totalHoras.toFixed(1)} h
+                            <td className="py-2.5 px-3">
+                              <div className="font-semibold text-slate-900">{choque.asignacionB.materia}</div>
+                              <div className="font-mono text-[11px] text-red-700 font-semibold">
+                                {choque.asignacionB.horario}
+                              </div>
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot className="bg-slate-100 text-slate-900 font-bold border-t border-slate-200">
-                      <tr>
-                        <td colSpan={6} className="py-2.5 px-3 text-slate-700 uppercase text-[11px]">
-                          Total Asignaciones Seleccionadas ({seleccionadasResumen.length} de {asignaciones.length})
-                        </td>
-                        <td className="py-2.5 px-3 text-center font-mono text-xs">
-                          {totalesSeleccionados.totalSesiones} clases
-                        </td>
-                        <td className="py-2.5 px-3 text-right text-xs">
-                          {totalesSeleccionados.totalHoras.toFixed(1)} h
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {currentAsig && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                      Distribución por Mes ({currentAsig.materia})
-                    </h4>
-                    <div className="divide-y divide-slate-100 text-xs">
-                      {Object.entries(metricasAsigActiva.porMes).map(([mes, horas]) => (
-                        <div key={mes} className="py-2 flex justify-between items-center">
-                          <span className="font-medium text-slate-700">{mes}</span>
-                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                            {horas.toFixed(1)} h
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-
-                  <div className="bg-white border border-slate-200 rounded p-4 space-y-3">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
-                      Distribución por Semana ({currentAsig.materia})
-                    </h4>
-                    <div className="divide-y divide-slate-100 text-xs max-h-[220px] overflow-y-auto pr-1">
-                      {Object.entries(metricasAsigActiva.porSemana).map(([semana, horas]) => (
-                        <div key={semana} className="py-2 flex justify-between items-center">
-                          <span className="text-slate-600">Semana del {formatDateDDMMYYYY(semana)}</span>
-                          <span className="font-mono font-semibold text-slate-900">{horas.toFixed(1)} h</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* TAB 3: Auditoría de Choques */}
-          {activeTab === 'choques' && (
-            <div className="bg-white border border-slate-200 rounded p-5 space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  Auditoría Cruzada de Choques Horarios
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Verificación de compatibilidad entre todas las asignaciones programadas para {docenteNombre || 'el docente'}.
-                </p>
+                )}
               </div>
-
-              {cantidadChoquesTotales === 0 ? (
-                <div className="text-center py-10 bg-slate-50 border border-slate-200 rounded">
-                  <IconCheck className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-800">Horarios compatibles y verificados</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    No se detectaron choques de horario en ninguna fecha del ciclo.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {Object.entries(mapaDeChoques).map(([sesionId, conflictos]) => {
-                    const sesion = todasLasSesiones.find((s) => s.id === sesionId);
-                    if (!sesion) return null;
-
-                    return (
-                      <div
-                        key={sesionId}
-                        className="p-3 rounded border border-red-200 bg-red-50 text-xs text-red-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
-                      >
-                        <div>
-                          <span className="font-bold block text-sm">
-                            {formatDateDDMMYYYY(sesion.fecha)} ({sesion.nombreDia})
-                          </span>
-                          <span className="text-red-700">
-                            {sesion.materia}: {formatTime12h(sesion.horaInicio)} a {formatTime12h(sesion.horaFin)}
-                          </span>
-                        </div>
-                        <div className="sm:text-right">
-                          <span className="font-bold text-red-800 block">Conflicto con:</span>
-                          {conflictos.map((c, i) => (
-                            <span key={i} className="block text-red-700">
-                              {c.contra} ({c.rango})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
 
@@ -1388,7 +1860,10 @@ export default function DocenteScheduleTool() {
                     type="date"
                     required
                     value={formAsignacion.fechaInicio}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, fechaInicio: e.target.value })}
+                    onChange={(e) => {
+                      setAlertaPeriodo(null);
+                      setFormAsignacion({ ...formAsignacion, fechaInicio: e.target.value });
+                    }}
                     className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
                   />
                 </div>
@@ -1398,7 +1873,10 @@ export default function DocenteScheduleTool() {
                     type="date"
                     required
                     value={formAsignacion.fechaFin}
-                    onChange={(e) => setFormAsignacion({ ...formAsignacion, fechaFin: e.target.value })}
+                    onChange={(e) => {
+                      setAlertaPeriodo(null);
+                      setFormAsignacion({ ...formAsignacion, fechaFin: e.target.value });
+                    }}
                     className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none"
                   />
                 </div>
@@ -1421,6 +1899,7 @@ export default function DocenteScheduleTool() {
                             type="checkbox"
                             checked={conf.activo}
                             onChange={(e) => {
+                              setAlertaPeriodo(null);
                               const checked = e.target.checked;
                               setFormAsignacion({
                                 ...formAsignacion,
@@ -1489,83 +1968,168 @@ export default function DocenteScheduleTool() {
       )}
 
       {/* MODAL 2: AJUSTE PUNTUAL DE FECHA */}
+      {/* Modal para Modificar Día Específico o Cancelar */}
+
       {modalExcepcion && (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-300 rounded max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-              <h3 className="font-bold text-slate-900 text-sm">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full p-6 flex flex-col">
+
+            {/* Encabezado fijo */}
+            <div className="pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base">
                 Ajuste para el {formatDateDDMMYYYY(modalExcepcion.fecha)} ({modalExcepcion.nombreDia})
               </h3>
-              <button
-                type="button"
-                onClick={() => setModalExcepcion(null)}
-                className="text-slate-400 hover:text-slate-700 cursor-pointer"
-              >
-                <IconX className="w-4 h-4" />
-              </button>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Configura una excepción puntual para esta fecha sin alterar el horario semanal base.
+              </p>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700">Acción a realizar</label>
-                <select
-                  value={excepForm.tipo}
-                  onChange={(e) => setExcepForm({ ...excepForm, tipo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2 text-xs focus:ring-1 focus:ring-slate-800 focus:outline-none cursor-pointer"
-                >
-                  <option value="MODIFICAR">Cambiar horario para esta fecha puntual</option>
-                  <option value="CANCELAR">Cancelar clase en esta fecha</option>
-                  <option value="RESET">Restablecer a horario regular</option>
-                </select>
-              </div>
+            {/* Cuerpo con altura mínima reservada para evitar saltos bruscos */}
+            <div className="py-4 space-y-4 text-xs min-h-[320px] flex flex-col justify-between">
 
-              {excepForm.tipo === 'MODIFICAR' && (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-slate-600 mb-1">Hora Inicio</label>
-                    <input
-                      type="time"
-                      value={excepForm.horaInicio}
-                      onChange={(e) => setExcepForm({ ...excepForm, horaInicio: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-600 mb-1">Hora Fin</label>
-                    <input
-                      type="time"
-                      value={excepForm.horaFin}
-                      onChange={(e) => setExcepForm({ ...excepForm, horaFin: e.target.value })}
-                      className="w-full border border-slate-300 rounded p-1.5"
-                    />
-                  </div>
+              {/* 1. Selector de Acción en 3 columnas horizontales */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-2">Acción</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    {
+                      valor: 'MODIFICAR',
+                      titulo: 'Cambiar horario',
+                      descripcion: 'Hora especial solo este día'
+                    },
+                    {
+                      valor: 'CANCELAR',
+                      titulo: 'Cancelar clase',
+                      descripcion: 'Suspende y no suma horas'
+                    },
+                    {
+                      valor: 'RESET',
+                      titulo: 'Horario original',
+                      descripcion: 'Mantiene horario semanal'
+                    }
+                  ].map((opcion) => {
+                    const seleccionado = excepForm.tipo === opcion.valor;
+                    return (
+                      <label
+                        key={opcion.valor}
+                        className={`flex flex-col justify-between p-2.5 rounded-lg border cursor-pointer transition ${seleccionado
+                          ? 'border-indigo-600 bg-indigo-50/60 text-slate-900 ring-1 ring-indigo-600/20'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                          }`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                          <span className="font-semibold text-xs leading-tight">{opcion.titulo}</span>
+                          <input
+                            type="radio"
+                            name="tipoExcepcion"
+                            value={opcion.valor}
+                            checked={seleccionado}
+                            onChange={(e) => setExcepForm({ ...excepForm, tipo: e.target.value })}
+                            className="text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                          />
+                        </div>
+                        <span className="block text-[11px] text-slate-500 leading-snug">
+                          {opcion.descripcion}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
-              <div>
-                <label className="block text-slate-600 mb-1">Motivo / Justificación</label>
-                <input
-                  type="text"
-                  placeholder="Ej. Reposición, ajuste operativo..."
-                  value={excepForm.motivo}
-                  onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
-                  className="w-full border border-slate-300 rounded p-2"
-                />
+              {/* 2. Área dinámica con espacio estable */}
+              <div className="flex-1 flex flex-col justify-start space-y-3">
+                {excepForm.tipo === 'MODIFICAR' && (
+                  <div className="space-y-2.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-medium text-slate-700 mb-1">Hora Inicio</label>
+                        <input
+                          type="time"
+                          value={excepForm.horaInicio}
+                          onChange={(e) => setExcepForm({ ...excepForm, horaInicio: e.target.value })}
+                          className={`w-full border rounded-lg p-2 ${rangoHorarioInvalido ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                            }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium text-slate-700 mb-1">Hora Fin</label>
+                        <input
+                          type="time"
+                          value={excepForm.horaFin}
+                          onChange={(e) => setExcepForm({ ...excepForm, horaFin: e.target.value })}
+                          className={`w-full border rounded-lg p-2 ${rangoHorarioInvalido ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                            }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Alert (Error crítico): Hora de fin inferior o igual a inicio */}
+                    {rangoHorarioInvalido && (
+                      <div
+                        role="alert"
+                        className="p-2.5 rounded-lg bg-red-50 border border-red-300 text-red-800 text-[11px] leading-snug"
+                      >
+                        <strong className="font-bold">Horario inválido:</strong> La hora de fin debe ser posterior a la hora de inicio.
+                      </div>
+                    )}
+
+                    {/* Warning (Aviso informativo): Horario idéntico al original */}
+                    {coincideConHorarioOriginal && (
+                      <div
+                        role="status"
+                        className="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 text-[11px] leading-snug"
+                      >
+                        <strong className="font-bold">Aviso:</strong> Coincide con el horario semanal original ({configOriginalDiaModal.horaInicio} - {configOriginalDiaModal.horaFin}). Se guardará como sesión regular sin marca de ajuste.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Campo de motivo */}
+                {excepForm.tipo !== 'RESET' && !coincideConHorarioOriginal && (
+                  <div>
+                    <label className="block font-medium text-slate-700 mb-1">Motivo / Justificación</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. Reposición, ajuste institucional"
+                      value={excepForm.motivo}
+                      onChange={(e) => setExcepForm({ ...excepForm, motivo: e.target.value })}
+                      className="w-full border border-slate-300 rounded-lg p-2"
+                    />
+                  </div>
+                )}
+
+                {/* Mensaje informativo cuando se elige horario original para aprovechar el espacio sin encoger el modal */}
+                {excepForm.tipo === 'RESET' && (
+                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-[11px] leading-relaxed">
+                    Esta fecha utilizará el horario semanal recurrente configurado para los días{' '}
+                    <strong className="text-slate-800">{modalExcepcion.nombreDia.toLowerCase()}</strong>
+                    {configOriginalDiaModal?.activo
+                      ? ` (${configOriginalDiaModal.horaInicio} - ${configOriginalDiaModal.horaFin}).`
+                      : '.'}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
+            {/* Pie fijo con botones */}
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setModalExcepcion(null)}
-                className="px-3 py-1.5 rounded text-xs text-slate-700 hover:bg-slate-100 border border-slate-300 font-semibold cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 font-medium cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 type="button"
                 onClick={guardarExcepcion}
-                className="px-4 py-1.5 rounded text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold cursor-pointer"
+                disabled={rangoHorarioInvalido}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition ${rangoHorarioInvalido
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer'
+                  }`}
               >
                 Aplicar Ajuste
               </button>
@@ -1806,14 +2370,72 @@ export default function DocenteScheduleTool() {
                             </div>
                             <div>
                               <label className="block font-medium text-slate-600 mb-1">Clasificación del Proyecto</label>
-                              {renderInputConSugerencias(`clasificaciones-${pIdx}`, prog.clasificacionProyecto, getClasificaciones(), (val) => {
-                                const nuevosProgs = [...requerimientoForm.programas];
-                                nuevosProgs[pIdx].clasificacionProyecto = val;
-                                setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
-                              }, 'w-full border border-slate-300 rounded p-1.5', { placeholder: 'Clasificación...' })}
+                              <input
+                                type="text"
+                                value={prog.clasificacionProyecto}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].clasificacionProyecto = val;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Código del Programa
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. DLOGIS / M10502"
+                                value={prog.codigo || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].codigo = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white uppercase focus:ring-1 focus:ring-indigo-600 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                N° de Solicitud
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. SOL-045/2026"
+                                value={prog.solicitudAprobacion || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].solicitudAprobacion = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                N° de Acuerdo de Impartición
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Ej. Acuerdo N° 120/2026-JD"
+                                value={prog.acuerdoImparticion || ''}
+                                onChange={(e) => {
+                                  const nuevosProgs = [...requerimientoForm.programas];
+                                  nuevosProgs[pIdx].acuerdoImparticion = e.target.value;
+                                  setRequerimientoForm({ ...requerimientoForm, programas: nuevosProgs });
+                                }}
+                                className="w-full border border-slate-300 rounded p-1.5"
+                              />
+                            </div>
+                            <div>
                             </div>
                           </>
                         )}
+
                       </div>
 
                       {/* Asignaciones del programa */}
@@ -2080,6 +2702,72 @@ export default function DocenteScheduleTool() {
                 {modalConfirmacion.textoBoton}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {alertaPeriodo && (
+        <div className="p-4 rounded-lg bg-amber-50 border border-amber-300 text-xs text-amber-950 space-y-3 z-[70]">
+          <div className="space-y-1">
+            <p className="font-bold text-amber-900">
+              Las fechas del periodo no coinciden con los días asignados
+            </p>
+            <ul className="list-disc list-inside text-amber-800 space-y-0.5">
+              {!alertaPeriodo.inicioValido && (
+                <li>
+                  La fecha de inicio ({formatDateDDMMYYYY(formAsignacion.fechaInicio)}) cae en{' '}
+                  <strong>{alertaPeriodo.diaInicioNombre}</strong>, día sin horario asignado.
+                </li>
+              )}
+              {!alertaPeriodo.finValido && (
+                <li>
+                  La fecha de fin ({formatDateDDMMYYYY(formAsignacion.fechaFin)}) cae en{' '}
+                  <strong>{alertaPeriodo.diaFinNombre}</strong>, día sin horario asignado.
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {alertaPeriodo.sugerencia ? (
+            <p className="text-amber-900 bg-amber-100/70 px-2.5 py-1.5 rounded border border-amber-200">
+              Periodo sugerido según las sesiones efectivas:{' '}
+              <strong>
+                {formatDateDDMMYYYY(alertaPeriodo.sugerencia.fechaInicio)} al{' '}
+                {formatDateDDMMYYYY(alertaPeriodo.sugerencia.fechaFin)}
+              </strong>
+            </p>
+          ) : (
+            <p className="text-red-700 font-medium">
+              No se encontró ninguna sesión válida dentro del rango de fechas seleccionado.
+            </p>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => confirmarGuardadoAsignacion(formAsignacion)}
+              className="px-3 py-1.5 rounded border border-amber-400 bg-white hover:bg-amber-100 text-amber-900 font-semibold cursor-pointer transition"
+            >
+              Mantener periodo ingresado
+            </button>
+
+            {alertaPeriodo.sugerencia && (
+              <button
+                type="button"
+                onClick={() => {
+                  const datosAjustados = {
+                    ...formAsignacion,
+                    fechaInicio: alertaPeriodo.sugerencia.fechaInicio,
+                    fechaFin: alertaPeriodo.sugerencia.fechaFin
+                  };
+                  setFormAsignacion(datosAjustados);
+                  confirmarGuardadoAsignacion(datosAjustados);
+                }}
+                className="px-3 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-semibold cursor-pointer transition"
+              >
+                Ajustar al primer y último día de clase
+              </button>
+            )}
           </div>
         </div>
       )}

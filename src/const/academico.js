@@ -27,10 +27,10 @@ export const ASUETOS_BASE = {
   '2026-01-01': 'Año Nuevo',
   '2026-03-30': 'Semana Santa', '2026-03-31': 'Semana Santa', '2026-04-01': 'Semana Santa',
   '2026-04-02': 'Semana Santa', '2026-04-03': 'Semana Santa', '2026-04-04': 'Semana Santa', '2026-04-05': 'Semana Santa',
-  '2026-05-01': 'Día del Trabajo', '2026-05-10': 'Día de la Madre', '2026-06-17': 'Día del Padre',
+  '2026-04-06': 'Semana Santa', '2026-05-01': 'Día del Trabajo', '2026-05-10': 'Día de la Madre', '2026-06-17': 'Día del Padre',
   '2026-08-01': 'Vacaciones Agostinas', '2026-08-02': 'Vacaciones Agostinas', '2026-08-03': 'Vacaciones Agostinas',
-  '2026-08-04': 'Vacaciones Agostinas', '2026-08-05': 'Vacaciones Agostinas', '2026-08-06': 'Vacaciones Agostinas',
-  '2026-08-07': 'Vacaciones Agostinas', '2026-09-15': 'Independencia', '2026-11-02': 'Difuntos', '2026-12-25': 'Navidad',
+  '2026-08-04': 'Vacaciones Agostinas', '2026-08-05': 'Vacaciones Agostinas', '2026-08-06': 'Vacaciones Agostinas', 
+  '2026-09-15': 'Independencia', '2026-11-02': 'Difuntos', '2026-12-25': 'Navidad',
   // 2027
   '2027-01-01': 'Año Nuevo',
   '2027-03-22': 'Semana Santa', '2027-03-23': 'Semana Santa', '2027-03-24': 'Semana Santa',
