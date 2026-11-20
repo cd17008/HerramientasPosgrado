@@ -38,16 +38,12 @@
     "Finlandés"
   ],
   "gradosAcademicos": [
-    "Maestro/a Nacional",
-    "Doctor/a Nacional",
-    "Post Doctor/a Nacional",
-    "Ingeniero/a Nacional",
-    "Maestro/a Extranjero",
-    "Doctor/a Extranjero",
-    "Post Doctor/a Extranjero",
-    "Ingeniero/a Extranjero",
-    "Licenciado/a Nacional",
-    "Licenciado/a Extranjero"
+    "Maestro/a",
+    "Doctor/a",
+    "Post Doctor/a",
+    "Ingeniero/a",
+    "Licenciado/a",
+    "Otro"
   ],
   "facultades": [
     "Externo UES",
@@ -104,12 +100,6 @@
       "etiqueta": "EDICION II 2020"
     },
     {
-      "id": "2020-iii",
-      "edicion": "III",
-      "anio": 2020,
-      "etiqueta": "EDICION III 2020"
-    },
-    {
       "id": "2021-i",
       "edicion": "I",
       "anio": 2021,
@@ -120,12 +110,6 @@
       "edicion": "II",
       "anio": 2021,
       "etiqueta": "EDICION II 2021"
-    },
-    {
-      "id": "2021-iii",
-      "edicion": "III",
-      "anio": 2021,
-      "etiqueta": "EDICION III 2021"
     },
     {
       "id": "2022-i",
@@ -140,12 +124,6 @@
       "etiqueta": "EDICION II 2022"
     },
     {
-      "id": "2022-iii",
-      "edicion": "III",
-      "anio": 2022,
-      "etiqueta": "EDICION III 2022"
-    },
-    {
       "id": "2023-i",
       "edicion": "I",
       "anio": 2023,
@@ -156,12 +134,6 @@
       "edicion": "II",
       "anio": 2023,
       "etiqueta": "EDICION II 2023"
-    },
-    {
-      "id": "2023-iii",
-      "edicion": "III",
-      "anio": 2023,
-      "etiqueta": "EDICION III 2023"
     },
     {
       "id": "2024-i",
@@ -176,12 +148,6 @@
       "etiqueta": "EDICION II 2024"
     },
     {
-      "id": "2024-iii",
-      "edicion": "III",
-      "anio": 2024,
-      "etiqueta": "EDICION III 2024"
-    },
-    {
       "id": "2025-i",
       "edicion": "I",
       "anio": 2025,
@@ -192,12 +158,6 @@
       "edicion": "II",
       "anio": 2025,
       "etiqueta": "EDICION II 2025"
-    },
-    {
-      "id": "2025-iii",
-      "edicion": "III",
-      "anio": 2025,
-      "etiqueta": "EDICION III 2025"
     },
     {
       "id": "2026-i",
@@ -212,12 +172,6 @@
       "etiqueta": "EDICION II 2026"
     },
     {
-      "id": "2026-iii",
-      "edicion": "III",
-      "anio": 2026,
-      "etiqueta": "EDICION III 2026"
-    },
-    {
       "id": "2027-i",
       "edicion": "I",
       "anio": 2027,
@@ -228,12 +182,15 @@
       "edicion": "II",
       "anio": 2027,
       "etiqueta": "EDICION II 2027"
-    },
-    {
-      "id": "2027-iii",
-      "edicion": "III",
-      "anio": 2027,
-      "etiqueta": "EDICION III 2027"
     }
+  ],
+  "cargosMAYDOC":[
+    "DOCENTE",
+    "COORDINADOR",
+    "ASESOR DE TESIS"
+  ],
+  "cargosEC":[
+    "DOCENTE",
+    "COORDINADOR"
   ]
 }
