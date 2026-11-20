@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
+
 
 //Import librerias, elementos visuales 
 import toast, { Toaster } from 'react-hot-toast';
@@ -37,8 +36,21 @@ import {
   formatearRangoFechasTexto
 } from './utils/dateUtils';
 
+
+
 //Import de servicios propios
-import { generarExpedienteCompletoExcel } from './services/excel/excelExport';
+import {
+  getProgramas,
+  getDocentes,
+  getDocentePorNombre,
+  getAsignaturasPorPrograma,
+  getGrados,
+  getNacionalidades,
+  getTiposContratoEP,
+  getCategoriasDocente,
+  getEdiciones,
+  getCohortesPorPrograma
+} from './services/catalogService';
 import { generarCorreoWord } from './services/word/buildCorreoWordService';
 import { generarInformeMaestriasWord } from './services/word/informe/buildInformeMaestrias';
 
@@ -120,7 +132,7 @@ export default function DocenteScheduleTool() {
 
 
   useEffect(() => {
-    if  (currentAsig?.dias) {
+    if (currentAsig?.dias) {
       const diasActivos = DIAS_SEMANA
         .filter((d) => currentAsig.dias[d.id]?.activo)
         .map((d) => d.id);
@@ -138,7 +150,7 @@ export default function DocenteScheduleTool() {
     mensaje: '',
     textoBoton: 'Confirmar',
     tipo: 'peligro',
-    onConfirmar: () => { }
+    onConfirmar: () => { },
     tipo: 'peligro', // 'peligro' | 'info'
     onConfirmar: () => { }
   });
@@ -502,32 +514,6 @@ export default function DocenteScheduleTool() {
       dias: JSON.parse(JSON.stringify(asig.dias))
     });
     setModalAsignacionAbierto(true);
-  };
-
-  const handleGuardarAsignacion = (e) => {
-    e.preventDefault();
-    const esCoord = esCargoCoordinador(formAsignacion.cargo);
-    if (!formAsignacion.programaNombre.trim() || (!esCoord && !formAsignacion.materia.trim())) {
-      toast.error('Por favor completa los campos requeridos de la asignación.');
-      return;
-    }
-
-    const payload = {
-      ...formAsignacion,
-      materia: esCoord ? `Coordinación Académica - ${formAsignacion.programaNombre}` : formAsignacion.materia
-    };
-
-    if (modoEdicion) {
-      setAsignaciones((prev) => prev.map((a) => (a.id === payload.id ? { ...a, ...payload } : a)));
-    } else {
-      const nueva = { ...payload, excepciones: {} };
-      setAsignaciones((prev) => [...prev, nueva]);
-      setAsignacionSeleccionadaId(nueva.id);
-      setSeleccionadasResumen((prev) => [...prev, nueva.id]);
-    }
-    toast.success(modoEdicion ? 'Asignación actualizada' : 'Asignación creada exitosamente');
-    setModalAsignacionAbierto(false);
-  };
   };
 
   const handleEliminarAsignacion = (idAEliminar) => {
@@ -2773,4 +2759,4 @@ export default function DocenteScheduleTool() {
       )}
     </div>
   );
-}
+};
