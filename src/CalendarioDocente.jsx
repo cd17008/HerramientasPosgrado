@@ -50,7 +50,7 @@ import {
   getCategoriasDocente,
   getEdiciones,
   getCohortesPorPrograma
-} from './services/catalogosService';
+} from './services/catalogService';
 import { generarCorreoWord } from './services/word/buildCorreoWordService';
 import { generarInformeMaestriasWord } from './services/word/informe/buildInformeMaestrias';
 
