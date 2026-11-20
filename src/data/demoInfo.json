@@ -1,0 +1,41 @@
+[
+    {
+        "id": "asig-1",
+        "programaNombre": "MAESTRÍA EN ENERGÍAS RENOVABLES Y MEDIO AMBIENTE",
+        "programaTipo": "MAESTRIA",
+        "materia": "CELDAS DE COMBUSTIBLE Y PILAS DE HIDROGENO",
+        "cargo": "DOCENTE DE MAESTRIA",
+        "fechaInicio": "2026-10-19",
+        "fechaFin": "2026-11-16",
+        "dias": {
+            "2": {
+                "activo": true,
+                "horaInicio": "18: 00",
+                "horaFin": "21: 00"
+            },
+            "4": {
+                "activo": true,
+                "horaInicio": "18: 00",
+                "horaFin": "21: 00"
+            }
+        },
+        "excepciones": {}
+    },
+    {
+        "id": "asig-2",
+        "programaNombre": "DIPLOMADO EN POWER BI",
+        "programaTipo": "DIPLOMADO",
+        "materia": "MODULO II",
+        "cargo": "DOCENTE DE DIPLOMADO",
+        "fechaInicio": "2026-11-03",
+        "fechaFin": "2026-12-12",
+        "dias": {
+            "6": {
+                "activo": true,
+                "horaInicio": "08: 00",
+                "horaFin": "12: 00"
+            }
+        },
+        "excepciones": {}
+    }
+]
