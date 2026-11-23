@@ -1,74 +1,177 @@
-import programas from '../data/programas.json';
-import asignaturas from '../data/asignaturas.json';
-import docentes from '../data/docentes.json';
-import cohortes from '../data/cohortes.json';
-import tarifas from '../data/tarifas.json';
-import catalogos from '../data/catalogos.json';
+import docentesData from '../data/docentes.json';
+import programasData from '../data/programas.json';
+import asignaturasData from '../data/asignaturas.json';
+import catalogosData from '../data/catalogos.json';
+import tarifasData from '../data/tarifas.json';
 
-const norm = (s) => (s || '').trim().toUpperCase();
-
-// ---------- Programas ----------
-/** @param {{ tipo?: 'MAESTRIA'|'DIPLOMADO', unidad?: 'MAYDOC'|'EC' }} filtros */
-export const getProgramas = ({ tipo, unidad } = {}) =>
-  programas.filter((p) => (!tipo || p.tipo === tipo) && (!unidad || p.unidad === unidad));
-
-export const getProgramaPorCodigo = (codigo) => programas.find((p) => p.codigo === codigo) || null;
-
-export const getProgramaPorNombre = (nombre) =>
-  programas.find((p) => norm(p.nombre) === norm(nombre)) || null;
-
-// ---------- Asignaturas ----------
-/** Asignaturas de un programa. Excluye las que en el Excel aún no tienen nombre real. */
-export const getAsignaturasPorPrograma = (codigoPrograma) =>
-  (asignaturas[codigoPrograma] || []).filter((a) => !a.pendiente);
-
-// ---------- Docentes ----------
-export const getDocentes = () => docentes;
-
-export const getDocentePorNombre = (nombre) =>
-  docentes.find((d) => norm(d.nombre) === norm(nombre)) || null;
-
-// ---------- Tarifas ----------
-export const getCategoriasDocente = () => tarifas.categoriasDocente;
-
-export const getTasaPorCategoria = (categoria) =>
-  tarifas.categoriasDocente.find((c) => c.id === categoria)?.tasaHora ?? null;
+const normalizeText = (text = '') =>
+  String(text)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
 
 /**
- * Factor de sobrecupo sugerido según clasificación (A/B/C) y cantidad de alumnos.
- * Devuelve el primer tramo cuyo máximo cubre la cantidad; si excede todos, el último factor.
+ * Listados base desde catálogos maestros
  */
-export const sugerirFactorSobrecupo = (clasificacion, alumnos) => {
-  const fila = tarifas.factoresSobrecupo.find((f) => f.clasificacion === clasificacion);
-  const n = Number(alumnos);
-  if (!fila || !Number.isFinite(n) || n <= 0) return null;
-  const tramo = fila.tramos.find((t) => t.maxAlumnos !== null && n <= t.maxAlumnos);
-  return (tramo ?? fila.tramos[fila.tramos.length - 1]).factor;
-};
+export const getDocentes = () => (Array.isArray(docentesData) ? docentesData : docentesData?.docentes || []);
 
-export const getClasificaciones = () => tarifas.factoresSobrecupo.map((f) => f.clasificacion);
+export const getProgramas = () => (Array.isArray(programasData) ? programasData : programasData?.programas || []);
 
-// ---------- Cohortes / ediciones ----------
-/** Números de cohorte conocidos para un programa, ej. MINGES -> [5] */
-export const getCohortesPorPrograma = (codigoPrograma) => [
-  ...new Set(cohortes.filter((c) => c.programa === codigoPrograma).map((c) => c.cohorte))
-];
+export const getAsignaturas = () =>
+  Array.isArray(asignaturasData) ? asignaturasData : asignaturasData?.asignaturas || [];
 
-/** Estudiantes registrados para programa + cohorte + ciclo (o null si no hay dato). */
-export const getEstudiantes = (codigoPrograma, cohorte, ciclo) =>
-  cohortes.find(
-    (c) => c.programa === codigoPrograma && c.cohorte === Number(cohorte) && c.ciclo === ciclo
-  )?.estudiantes ?? null;
+export const getCatalogos = () => ({
+  tiposContrato: catalogosData?.tiposContrato || [
+    'SERVICIOS PROFESIONALES NO PERSONALES',
+    'SERVICIOS PERSONALES',
+    'AD HONOREM'
+  ],
+  modalidadesServicio: catalogosData?.modalidadesServicio || ['EN LINEA', 'PRESENCIAL', 'SEMIPRESENCIAL'],
+  tiposPrograma: catalogosData?.tiposPrograma || [
+    'DIPLOMADO',
+    'MAESTRIA',
+    'DOCTORADO',
+    'CURSO',
+    'SEMINARIO'
+  ],
+  cargos: catalogosData?.cargos || [
+    'DOCENTE',
+    'COORDINADOR',
+    'ASESOR DE TESIS'
+  ],
+  clasificacionesProyecto: catalogosData?.clasificacionesProyecto || ['A', 'B', 'C'],
+  calificacionesDocente: ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9']
+});
 
-export const getEdiciones = () => catalogos.ediciones;
+/**
+ * Regla de negocio: Tipo de Contratación permitido según Tipo de Contrato
+ */
+export function getOpcionesContratacion(tipoContrato = '') {
+  const norm = normalizeText(tipoContrato);
+  if (norm.includes('NO PERSONALES') || norm.includes('AD HONOREM')) {
+    return ['TIEMPO NORMAL'];
+  }
+  if (norm.includes('PERSONALES')) {
+    return ['TIEMPO ADICIONAL', 'TIEMPO INTEGRAL'];
+  }
+  return ['TIEMPO NORMAL', 'TIEMPO ADICIONAL', 'TIEMPO INTEGRAL'];
+}
 
-// ---------- Catálogos simples ----------
-export const getNacionalidades = () => catalogos.nacionalidades;
-export const getGradosAcademicos = () => catalogos.gradosAcademicos;
-/** Grados sin la marca Nacional/Extranjero: ["Maestro/a", "Doctor/a", ...] */
-export const getGrados = () => [
-  ...new Set(catalogos.gradosAcademicos.map((g) => g.replace(/\s+(Nacional|Extranjero)$/, '')))
-];
-export const getFacultades = () => catalogos.facultades;
-export const getEstadosSolicitud = () => catalogos.estadosSolicitud;
-export const getTiposContratoEP = () => catalogos.tiposContratoEP;
+/**
+ * Autocompletado de docente por nombre exacto o coincidencia
+ */
+export function buscarDocentePorNombre(nombre = '') {
+  const norm = normalizeText(nombre);
+  if (!norm) return null;
+  return getDocentes().find((d) => normalizeText(d.nombreCompleto || d.nombre) === norm) || null;
+}
+
+/**
+ * Autocompletado de programa maestro (solo datos generales: código, nombre, tipo, clasificación)
+ */
+export function buscarProgramaMaestro(valor = '') {
+  const norm = normalizeText(valor);
+  if (!norm) return null;
+  return (
+    getProgramas().find(
+      (p) => normalizeText(p.nombre) === norm || normalizeText(p.codigo) === norm
+    ) || null
+  );
+}
+
+/**
+ * Filtra asignaturas/módulos pertenecientes a un código de programa
+ */
+export function getAsignaturasPorPrograma(codigoPrograma = '') {
+  const normCod = normalizeText(codigoPrograma);
+  if (!normCod) return [];
+  return getAsignaturas().filter(
+    (a) =>
+      normalizeText(a.codigoPrograma || a.programaCodigo || a.codigo_programa) === normCod
+  );
+}
+
+/**
+ * Obtiene el pago por hora según la escala docente F1–F9
+ */
+export function getTarifaPorCalificacion(calificacion = 'F1') {
+  const cal = normalizeText(calificacion);
+
+  // Intenta leer desde tarifas.json si existe mapeo directo
+  const mapaTarifas = tarifasData?.calificaciones || tarifasData?.tarifas || tarifasData;
+  if (mapaTarifas && typeof mapaTarifas[cal] === 'number') {
+    return mapaTarifas[cal];
+  }
+
+  // Respaldo institucional estándar
+  if (['F1', 'F2'].includes(cal)) return 18.75;
+  if (['F3', 'F4'].includes(cal)) return 20.0;
+  if (['F5', 'F6', 'F7', 'F8', 'F9'].includes(cal)) return 22.5;
+  return 18.75;
+}
+
+/**
+ * Filtra los programas maestros según su propiedad "categoria"
+ */
+export function getProgramasPorCategoria(tipoPrograma = '') {
+  const normTipo = normalizeText(tipoPrograma);
+  if (!normTipo) return getProgramas();
+
+  return getProgramas().filter((p) => {
+    const cat = normalizeText(p.categoria || p.tipo || p.tipoPrograma || '');
+    return cat === normTipo;
+  });
+}
+
+/**
+ * Sugiere el factor de sobrecupo cruzando clasificación del proyecto (A, B, C)
+ * con la cantidad de alumnos inscritos según la tabla oficial de Educación Continua.
+ */
+export function calcularFactorSobrecupo(clasificacion = 'A', alumnosInscritos = 0) {
+  const alumnos = Number(alumnosInscritos) || 0;
+  const cat = normalizeText(clasificacion);
+
+  if (alumnos <= 0) return 1.0;
+
+  // 1. Si tarifas.json define reglas/rangos por clasificación, evalúalos primero
+  const tablaJson =
+    tarifasData?.sobrecupo?.[cat] ||
+    tarifasData?.factoresSobrecupo?.[cat] ||
+    tarifasData?.rangosSobrecupo?.[cat];
+
+  if (Array.isArray(tablaJson) && tablaJson.length > 0) {
+    const regla = tablaJson.find((r) => {
+      const min = r.min ?? 0;
+      const max = r.max ?? Infinity;
+      return alumnos >= min && alumnos <= max;
+    });
+    if (regla && typeof regla.factor === 'number') {
+      return regla.factor;
+    }
+  }
+
+  // 2. Respaldo exacto según tabla de referencia oficial
+  if (cat === 'A') {
+    if (alumnos <= 30) return 1.0;
+    if (alumnos <= 45) return 1.25;
+    if (alumnos <= 70) return 1.5;
+    return 2.0;
+  }
+
+  if (cat === 'B') {
+    if (alumnos <= 35) return 1.0;
+    if (alumnos <= 50) return 1.25;
+    if (alumnos <= 70) return 1.5;
+    return 2.0;
+  }
+
+  if (cat === 'C') {
+    if (alumnos <= 40) return 1.0;
+    if (alumnos <= 60) return 1.25;
+    if (alumnos <= 70) return 1.5;
+    return 2.0;
+  }
+
+  return 1.0;
+}
