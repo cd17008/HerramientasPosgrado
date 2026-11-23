@@ -3,7 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { useCalendarioDocente } from './hooks/useCalendarioDocente';
 
 import HeaderBar from './components/layout/HeaderBar';
-import Sidebar from './components/layout/Sidebar';
+import Sidebar from './components/layout/SideBar';
 import TabsNavigation from './components/layout/TabsNavigation';
 
 import SesionesView from './components/views/SesionesView';
