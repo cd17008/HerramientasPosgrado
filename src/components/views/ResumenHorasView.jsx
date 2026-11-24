@@ -14,8 +14,11 @@ export default function ResumenHorasView({
     seleccionadasResumen,
     setSeleccionadasResumen,
     currentAsig,
-    metricasActuales
+    metricasActuales,
+    docente
 }) {
+    const esTiempoIntegral = docente?.tipoContratacion === 'TIEMPO INTEGRAL';
+
     const todasSeleccionadas =
         resumenAsignaciones.length > 0 &&
         seleccionadasResumen.length === resumenAsignaciones.length;
@@ -37,7 +40,6 @@ export default function ResumenHorasView({
     const filasSeleccionadas = resumenAsignaciones.filter((r) =>
         seleccionadasResumen.includes(r.id)
     );
-    const totalSesiones = filasSeleccionadas.reduce((acc, r) => acc + r.totalSesiones, 0);
     const totalHoras = filasSeleccionadas.reduce((acc, r) => acc + r.totalHoras, 0);
     const totalHorasSobrecupo = filasSeleccionadas.reduce(
         (acc, r) => acc + r.horasConSobrecupo,
@@ -54,10 +56,28 @@ export default function ResumenHorasView({
         semanasOrdenadas.length > 0
             ? (metricasActuales.totalHoras / semanasOrdenadas.length).toFixed(1)
             : '0.0';
-    const tituloActivo =
-        resumenAsignaciones.find((r) => r.id === currentAsig?.id)?.tituloVisible ||
-        currentAsig?.materia ||
-        '';
+
+    const resumenActivo = resumenAsignaciones.find((r) => r.id === currentAsig?.id);
+    const tituloActivo = resumenActivo?.tituloVisible || currentAsig?.materia || '';
+
+    const mapaDetalleIntegralMes = new Map(
+        (resumenActivo?.detalleMesesIntegral || []).map((d) => [d.mes, d])
+    );
+
+    const totalSesiones = filasSeleccionadas.reduce((acc, r) => acc + r.totalSesiones, 0);
+    const totalHorasAsignadas = filasSeleccionadas.reduce(
+        (acc, r) => acc + (Number(r.horasConSobrecupo ?? r.totalHoras) || 0),
+        0
+    );
+    const totalHorasPAE = filasSeleccionadas.reduce(
+        (acc, r) => acc + (Number(r.horasPAE ?? r.totalHoras) || 0),
+        0
+    );
+    const totalMonto = filasSeleccionadas.reduce(
+        (acc, r) => acc + (Number(r.subtotal) || 0),
+        0
+    );
+
     return (
         <div className="space-y-5">
             {/* 1. TABLA CONSOLIDADA POR ASIGNACIÓN */}
@@ -88,15 +108,16 @@ export default function ResumenHorasView({
                                 <th className="py-2.5 px-3 font-semibold">Fecha Inicio</th>
                                 <th className="py-2.5 px-3 font-semibold">Fecha Fin</th>
                                 <th className="py-2.5 px-3 font-semibold text-right">Sesiones</th>
-                                <th className="py-2.5 px-3 font-semibold text-right">Horas Base</th>
+                                <th className="py-2.5 px-3 font-semibold text-right">Horas Asignadas</th>
                                 <th className="py-2.5 px-3 font-semibold text-right">Factor</th>
-                                <th className="py-2.5 px-3 font-semibold text-right">Horas Totales</th>
+                                <th className="py-2.5 px-3 font-semibold text-right">Horas PAE</th>
+                                <th className="py-2.5 px-3 font-semibold text-right">Monto ($)</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {resumenAsignaciones.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="py-8 text-center text-slate-500">
+                                    <td colSpan={10} className="py-8 text-center text-slate-500">
                                         No hay asignaciones registradas todavía.
                                     </td>
                                 </tr>
@@ -126,7 +147,9 @@ export default function ResumenHorasView({
                                             </td>
                                             <td className="py-2.5 px-3">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="font-bold text-slate-900">{item.tituloVisible}</p>
+                                                    <p className="font-bold text-slate-900">
+                                                        {item.tituloVisible || item.materia}
+                                                    </p>
                                                     {esActiva && (
                                                         <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded">
                                                             Activa
@@ -143,14 +166,32 @@ export default function ResumenHorasView({
                                                 {formatDateDDMMYYYY(item.fechaFin)}
                                             </td>
                                             <td className="py-2.5 px-3 text-right font-mono">{item.totalSesiones}</td>
-                                            <td className="py-2.5 px-3 text-right font-mono">
-                                                {item.totalHoras.toFixed(2)}h
+                                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
+                                                <div>
+                                                    {(Number(item.horasConSobrecupo ?? item.totalHoras) || 0).toFixed(2)}h
+                                                </div>
+                                                {item.horasSobrecupo > 0 && item.factorSobrecupo > 1 && (
+                                                    <div className="text-[10px] font-normal text-slate-500">
+                                                        Con sobrecupo
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="py-2.5 px-3 text-right font-mono">
                                                 {item.factorSobrecupo.toFixed(2)}x
                                             </td>
-                                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                                                {item.horasConSobrecupo.toFixed(2)}h
+                                            <td className="py-2.5 px-3 text-right font-mono font-semibold text-indigo-700">
+                                                {(Number(item.horasPAE ?? item.totalHoras) || 0).toFixed(2)}h
+                                            </td>
+                                            <td
+                                                className={`py-2.5 px-3 text-right font-mono font-bold ${checked ? 'text-emerald-700' : 'text-slate-400'
+                                                    }`}
+                                            >
+                                                <div>${(Number(item.subtotal) || 0).toFixed(2)}</div>
+                                                {esTiempoIntegral && (
+                                                    <div className="text-[10px] font-normal text-slate-500">
+                                                        {item.mesesCompletos} / {item.totalMesesEvaluados} meses
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -164,10 +205,15 @@ export default function ResumenHorasView({
                                         Total Seleccionado ({filasSeleccionadas.length}):
                                     </td>
                                     <td className="py-2.5 px-3 text-right font-mono">{totalSesiones}</td>
-                                    <td className="py-2.5 px-3 text-right font-mono">{totalHoras.toFixed(2)}h</td>
-                                    <td className="py-2.5 px-3 text-right">—</td>
                                     <td className="py-2.5 px-3 text-right font-mono">
-                                        {totalHorasSobrecupo.toFixed(2)}h
+                                        {totalHorasAsignadas.toFixed(2)}h
+                                    </td>
+                                    <td className="py-2.5 px-3 text-right">—</td>
+                                    <td className="py-2.5 px-3 text-right font-mono text-indigo-700">
+                                        {totalHorasPAE.toFixed(2)}h
+                                    </td>
+                                    <td className="py-2.5 px-3 text-right font-mono text-emerald-700">
+                                        ${totalMonto.toFixed(2)}
                                     </td>
                                 </tr>
                             </tfoot>
@@ -225,14 +271,34 @@ export default function ResumenHorasView({
                                         Sin horas registradas.
                                     </p>
                                 ) : (
-                                    mesesOrdenados.map(([mes, horas]) => (
-                                        <div key={mes} className="py-2.5 flex justify-between items-center">
-                                            <span className="font-medium text-slate-700">{formatearMesAnio(mes)}</span>
-                                            <span className="font-bold font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">
-                                                {horas.toFixed(1)} horas
-                                            </span>
-                                        </div>
-                                    ))
+                                    mesesOrdenados.map(([mes, horas]) => {
+                                        const infoIntegral = esTiempoIntegral
+                                            ? mapaDetalleIntegralMes.get(mes)
+                                            : null;
+
+                                        return (
+                                            <div key={mes} className="py-2.5 flex justify-between items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-medium text-slate-700">
+                                                        {formatearMesAnio(mes)}
+                                                    </span>
+                                                    {infoIntegral &&
+                                                        (infoIntegral.esMesCompleto ? (
+                                                            <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded">
+                                                                Mes completo ({infoIntegral.cumpleMensual ? '≥20h/mes' : '≥5h/sem'})
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">
+                                                                Incompleto (&lt;20h/mes y &lt;5h/sem)
+                                                            </span>
+                                                        ))}
+                                                </div>
+                                                <span className="font-bold font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded shrink-0">
+                                                    {horas.toFixed(1)} horas
+                                                </span>
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

@@ -37,7 +37,7 @@ export default function CalendarioGrid({ mesesCalendario, mapaDeChoques, onClick
 
                     {/* Celdas de Días */}
                     <div className="grid grid-cols-7 bg-slate-200 gap-px">
-                        {mes.celdas.map((celda, idx) => {
+                        {(mes.celdas || []).map((celda, idx) => {
                             if (!celda) {
                                 return (
                                     <div
@@ -79,10 +79,10 @@ export default function CalendarioGrid({ mesesCalendario, mapaDeChoques, onClick
                                     <div className="flex items-center justify-between">
                                         <span
                                             className={`text-xs font-bold ${fueraDePeriodo
-                                                    ? 'text-slate-400/90'
-                                                    : sesion?.activa
-                                                        ? 'text-slate-800'
-                                                        : 'text-slate-600'
+                                                ? 'text-slate-400/90'
+                                                : sesion?.activa
+                                                    ? 'text-slate-800'
+                                                    : 'text-slate-600'
                                                 }`}
                                         >
                                             {dia}

@@ -10,6 +10,9 @@ import {
 const INPUT_CLASS =
     'w-full border border-slate-300 rounded p-2 text-xs bg-white text-slate-900 focus:ring-1 focus:ring-slate-800 focus:outline-none';
 
+const LOCKED_INPUT_CLASS =
+    'w-full border border-slate-200 rounded p-2 text-xs bg-slate-100 text-slate-600 font-mono cursor-not-allowed select-none';
+
 export default function ModalDocente({ docenteInicial, onGuardar, onCerrar }) {
     const catalogos = getCatalogos();
     const listaDocentes = getDocentes();
@@ -24,24 +27,45 @@ export default function ModalDocente({ docenteInicial, onGuardar, onCerrar }) {
         modalidadServicio: docenteInicial?.modalidadServicio || 'EN LINEA',
         calificacionDocente: docenteInicial?.calificacionDocente || 'F1',
         pagoPorHora: docenteInicial?.pagoPorHora ?? 18.75,
-        sueldoNominal: docenteInicial?.sueldoNominal ?? 0,
-        porcentajePago: docenteInicial?.porcentajePago ?? 13,
+        escalafon: docenteInicial?.escalafon || '',
+        salario: docenteInicial?.salario ?? 0,
+        salarioMensual: docenteInicial?.salarioMensual ?? docenteInicial?.sueldoNominal ?? 0,
+        porcentajePago: docenteInicial?.porcentajePago ?? 75,
         cantidadMeses: docenteInicial?.cantidadMeses ?? 1
     });
 
     const opcionesContratacion = getOpcionesContratacion(form.tipoContrato);
+    const esTiempoAdicional = form.tipoContratacion === 'TIEMPO ADICIONAL';
     const esTiempoIntegral = form.tipoContratacion === 'TIEMPO INTEGRAL';
+
+    // Cálculos automáticos en tiempo real
+    const salarioNum = Number(form.salario) || 0;
+    const salarioMensualNum = Number(form.salarioMensual) || 0;
+    const porcentajeNum = Number(form.porcentajePago) || 0;
+
+    const valorPorHoraCalculado =
+        salarioNum > 0 ? Number((salarioNum / 160).toFixed(2)) : 0;
+    const valorAjustadoHoraCalculado = Number(
+        (valorPorHoraCalculado * (porcentajeNum / 100)).toFixed(2)
+    );
+    const valorPorMesCalculado = Number(
+        (salarioMensualNum * (porcentajeNum / 100)).toFixed(2)
+    );
 
     const handleNombreChange = (valor) => {
         const encontrado = buscarDocentePorNombre(valor);
         if (encontrado) {
-            const cal = encontrado.calificacionDocente || encontrado.calificacion || form.calificacionDocente;
+            const cal =
+                encontrado.calificacionDocente || encontrado.calificacion || form.calificacionDocente;
             setForm((prev) => ({
                 ...prev,
                 nombreCompleto: valor,
                 profesion: encontrado.profesion || prev.profesion,
                 nacionalidad: encontrado.nacionalidad || prev.nacionalidad,
                 correo: encontrado.correo || encontrado.email || prev.correo,
+                escalafon: encontrado.escalafon || prev.escalafon,
+                salario: encontrado.salario ?? prev.salario,
+                salarioMensual: encontrado.salarioMensual ?? encontrado.salario ?? prev.salarioMensual,
                 calificacionDocente: cal,
                 pagoPorHora: getTarifaPorCalificacion(cal)
             }));
@@ -74,17 +98,40 @@ export default function ModalDocente({ docenteInicial, onGuardar, onCerrar }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!form.nombreCompleto.trim()) return;
-        onGuardar({
+
+        const payloadBase = {
             ...form,
             nombreCompleto: form.nombreCompleto.trim(),
             profesion: form.profesion.trim(),
             nacionalidad: form.nacionalidad.trim(),
             correo: form.correo.trim(),
-            pagoPorHora: Number(form.pagoPorHora) || 0,
-            sueldoNominal: Number(form.sueldoNominal) || 0,
-            porcentajePago: Number(form.porcentajePago) || 13,
+            escalafon: form.escalafon.trim(),
+            salario: salarioNum,
+            salarioMensual: salarioMensualNum,
+            porcentajePago: porcentajeNum,
             cantidadMeses: Number(form.cantidadMeses) || 1
-        });
+        };
+
+        if (esTiempoAdicional) {
+            onGuardar({
+                ...payloadBase,
+                valorPorHora: valorPorHoraCalculado,
+                valorAjustadoHora: valorAjustadoHoraCalculado,
+                pagoPorHora: valorAjustadoHoraCalculado
+            });
+        } else if (esTiempoIntegral) {
+            onGuardar({
+                ...payloadBase,
+                sueldoNominal: salarioMensualNum,
+                valorPorMes: valorPorMesCalculado,
+                pagoPorHora: 0
+            });
+        } else {
+            onGuardar({
+                ...payloadBase,
+                pagoPorHora: Number(form.pagoPorHora) || 0
+            });
+        }
     };
 
     return (
@@ -208,7 +255,128 @@ export default function ModalDocente({ docenteInicial, onGuardar, onCerrar }) {
                             </select>
                         </div>
 
-                        {!esTiempoIntegral ? (
+                        {/* 1. TIEMPO ADICIONAL */}
+                        {esTiempoAdicional && (
+                            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded">
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Escalafón
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej. Profesor Universitario I"
+                                        value={form.escalafon}
+                                        onChange={(e) => setForm({ ...form, escalafon: e.target.value })}
+                                        className={INPUT_CLASS}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Salario ($)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={form.salario}
+                                        onChange={(e) => setForm({ ...form, salario: e.target.value })}
+                                        className={`${INPUT_CLASS} font-mono`}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Valor por Hora ($) <span className="text-[10px] font-normal text-slate-500">(Salario / 160)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={valorPorHoraCalculado.toFixed(2)}
+                                        className={LOCKED_INPUT_CLASS}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Porcentaje a Pagar (%)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        value={form.porcentajePago}
+                                        onChange={(e) => setForm({ ...form, porcentajePago: e.target.value })}
+                                        className={`${INPUT_CLASS} font-mono`}
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Valor Ajustado por Hora ($){' '}
+                                        <span className="text-[10px] font-normal text-slate-500">
+                                            (Valor por hora &times; Porcentaje a pagar)
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={valorAjustadoHoraCalculado.toFixed(2)}
+                                        className={`${LOCKED_INPUT_CLASS} font-bold text-slate-800`}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. TIEMPO INTEGRAL */}
+                        {esTiempoIntegral && (
+                            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded">
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Salario Mensual ($)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={form.salarioMensual}
+                                        onChange={(e) => setForm({ ...form, salarioMensual: e.target.value })}
+                                        className={`${INPUT_CLASS} font-mono`}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Porcentaje a Pagar (%)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="100"
+                                        value={form.porcentajePago}
+                                        onChange={(e) => setForm({ ...form, porcentajePago: e.target.value })}
+                                        className={`${INPUT_CLASS} font-mono`}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-semibold text-slate-700 mb-1">
+                                        Valor por Mes ($)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        disabled
+                                        value={valorPorMesCalculado.toFixed(2)}
+                                        className={`${LOCKED_INPUT_CLASS} font-bold text-slate-800`}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. SERVICIOS PROFESIONALES / AD HONOREM (TIEMPO NORMAL) */}
+                        {!esTiempoAdicional && !esTiempoIntegral && (
                             <>
                                 <div>
                                     <label className="block font-semibold text-slate-700 mb-1">
@@ -241,48 +409,6 @@ export default function ModalDocente({ docenteInicial, onGuardar, onCerrar }) {
                                     />
                                 </div>
                             </>
-                        ) : (
-                            <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded">
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        Sueldo Nominal ($)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={form.sueldoNominal}
-                                        onChange={(e) => setForm({ ...form, sueldoNominal: e.target.value })}
-                                        className={`${INPUT_CLASS} font-mono`}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        Porcentaje a Pagar (%)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="100"
-                                        value={form.porcentajePago}
-                                        onChange={(e) => setForm({ ...form, porcentajePago: e.target.value })}
-                                        className={`${INPUT_CLASS} font-mono`}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block font-semibold text-slate-700 mb-1">
-                                        Cantidad de Meses
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={form.cantidadMeses}
-                                        onChange={(e) => setForm({ ...form, cantidadMeses: e.target.value })}
-                                        className={`${INPUT_CLASS} font-mono`}
-                                    />
-                                </div>
-                            </div>
                         )}
                     </div>
 

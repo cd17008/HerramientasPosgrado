@@ -110,6 +110,7 @@ export default function CalendarioDocente() {
                 setSeleccionadasResumen={state.setSeleccionadasResumen}
                 currentAsig={state.currentAsig}
                 metricasActuales={state.metricasActuales}
+                docente={state.docente}
               />
             )}
 
@@ -147,6 +148,7 @@ export default function CalendarioDocente() {
           modo={state.modalAsignacion.modo}
           datosIniciales={state.modalAsignacion.datos}
           programas={state.programas}
+          docente={state.docente}
           programaIdPreseleccionado={state.modalAsignacion.programaIdPreseleccionado}
           onGuardar={state.guardarAsignacion}
           onCerrar={() =>

@@ -77,8 +77,8 @@ export function useCalendarioDocente() {
     );
 
     const resumenAsignaciones = useMemo(
-        () => calcularResumenPorAsignacion(asignaciones, programas, todasLasSesiones),
-        [asignaciones, programas, todasLasSesiones]
+        () => calcularResumenPorAsignacion(asignaciones, programas, todasLasSesiones, docente),
+        [asignaciones, programas, todasLasSesiones, docente]
     );
 
     const currentAsig = useMemo(
