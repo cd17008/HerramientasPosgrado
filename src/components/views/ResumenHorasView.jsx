@@ -69,6 +69,8 @@ export default function ResumenHorasView({
         (acc, r) => acc + (Number(r.horasConSobrecupo ?? r.totalHoras) || 0),
         0
     );
+
+
     const totalHorasPAE = filasSeleccionadas.reduce(
         (acc, r) => acc + (Number(r.horasPAE ?? r.totalHoras) || 0),
         0
@@ -176,8 +178,10 @@ export default function ResumenHorasView({
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="py-2.5 px-3 text-right font-mono">
-                                                {item.factorSobrecupo.toFixed(2)}x
+                                            <td className="py-2.5 px-3 text-right font-mono text-slate-600">
+                                                {item.ocultarFactorYAsignadas
+                                                    ? 'No Aplica'
+                                                    : `${Number(item.factorSobrecupo || 1).toFixed(2)}x`}
                                             </td>
                                             <td className="py-2.5 px-3 text-right font-mono font-semibold text-indigo-700">
                                                 {(Number(item.horasPAE ?? item.totalHoras) || 0).toFixed(2)}h

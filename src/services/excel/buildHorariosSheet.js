@@ -47,13 +47,26 @@ const EXCEL_STYLES = {
 };
 
 const obtenerTituloAsignacion = (item) => {
-  const idProg = (item.codigoPrograma || item.programaCodigo || item.programaNombre || item.programa || '')
+  const idProg = (
+    item.codigoPrograma ||
+    item.programaCodigo ||
+    item.programaNombre ||
+    item.programa ||
+    ''
+  )
     .trim()
     .toUpperCase();
-  const mod = (item.moduloCiclo || '').trim().toUpperCase();
-  if (idProg && mod) return `${idProg} - ${mod}`;
+
+  const cargo = (item.cargo || '').trim().toUpperCase();
+  const esCoordinador =
+    cargo.includes('COORDINAD') || cargo.includes('COORDINAC');
+
+  const mod = esCoordinador ? '' : (item.moduloCiclo || '').trim().toUpperCase();
+  const sufijo = mod || (esCoordinador ? cargo || 'COORDINACIÓN' : '');
+
+  if (idProg && sufijo) return `${idProg} - ${sufijo}`;
   if (idProg) return idProg;
-  return item.materia || '';
+  return (sufijo || item.materia || '').toUpperCase();
 };
 
 export function buildHorariosSheet({ asignaciones, sesiones }) {

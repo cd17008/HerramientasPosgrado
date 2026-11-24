@@ -320,7 +320,7 @@ export default function ModalAsignacion({
                             <div>
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                     <label className="block font-semibold text-slate-700">
-                                        {esEC ? 'Módulo' : 'Ciclo'}
+                                        {esEC ? 'Módulo' : 'Ciclo'}*
                                     </label>
                                     {esEC && (
                                         <label className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 cursor-pointer select-none">
@@ -341,6 +341,7 @@ export default function ModalAsignacion({
                                 </div>
                                 <input
                                     type="text"
+                                    required={!esCoordinador}
                                     placeholder={esEC ? 'Ej. MODULO II' : 'Ej. CICLO I-2026'}
                                     value={form.moduloCiclo}
                                     onChange={(e) => setForm({ ...form, moduloCiclo: e.target.value })}
@@ -393,7 +394,24 @@ export default function ModalAsignacion({
                                     list="catalogo-asignaturas-list"
                                     placeholder="Escribe o selecciona una asignatura del programa"
                                     value={form.materia}
-                                    onChange={(e) => setForm({ ...form, materia: e.target.value })}
+                                    onChange={(e) => {
+                                        const valorMateria = e.target.value;
+                                        const matchCatalogo = asignaturasSugeridas.find(
+                                            (a) =>
+                                                normalizarTexto(a.nombre || a.asignatura) === normalizarTexto(valorMateria)
+                                        );
+                                        const cicloDetectado =
+                                            matchCatalogo?.ciclo || matchCatalogo?.modulo || matchCatalogo?.moduloCiclo || '';
+
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            materia: valorMateria,
+                                            moduloCiclo:
+                                                !prev.moduloCiclo.trim() && cicloDetectado
+                                                    ? String(cicloDetectado)
+                                                    : prev.moduloCiclo
+                                        }));
+                                    }}
                                     className={INPUT_CLASS}
                                 />
                                 <datalist id="catalogo-asignaturas-list">

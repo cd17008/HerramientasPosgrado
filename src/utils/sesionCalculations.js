@@ -338,7 +338,10 @@ export function calcularResumenPorAsignacion(
         const sesionesAsig = todasLasSesiones.filter((s) => s.activa && s.asignacionId === asig.id);
         const totalSesiones = sesionesAsig.length;
         const totalHoras = sesionesAsig.reduce((acc, curr) => acc + (Number(curr.duracionHoras) || 0), 0);
-
+        const esEC = esProgramaEC(programa);
+        const esMAYDOC = !esEC;
+        const esCoordinador = (asig.cargo || '').toUpperCase().includes('COORDINAD');
+        const ocultarFactorYAsignadas = (esCoordinador && esEC) || esMAYDOC;
         const pago = calcularPagoAsignacion({
             asig,
             programa,
@@ -347,7 +350,6 @@ export function calcularResumenPorAsignacion(
             sesionesAsig
         });
 
-        const esCoordinador = normalizarTexto(asig.cargo || '').includes('COORDIN');
 
         return {
             id: asig.id,
@@ -355,6 +357,9 @@ export function calcularResumenPorAsignacion(
             programaNombre: programa?.nombre || 'Sin programa',
             programaTipo: programa?.tipoPrograma || 'DIPLOMADO',
             cargo: asig.cargo || 'DOCENTE',
+            esEC,
+            esMAYDOC,
+            ocultarFactorYAsignadas,
             funciones: asig.funciones || (esCoordinador ? TEXTO_COORDINACION : ''),
             moduloCiclo: asig.moduloCiclo || '',
             materia: asig.materia,

@@ -131,44 +131,78 @@ const STYLES = {
 };
 
 function calcularDesgloseAsignacion({ prog, asig, docenteInfo }) {
-  const esDiplomado = prog.tipo === 'DIPLOMADO' || prog.nombre?.toUpperCase().includes('DIPLOMADO');
-  const esCoordinador = (asig.cargo || '').toUpperCase().includes('COORDINAD');
-  const esTiempoIntegral = docenteInfo.tipoContratacion === 'TIEMPO INTEGRAL';
+  const esEC = prog.unidad
+    ? String(prog.unidad).toUpperCase() === 'EC'
+    : prog.tipo !== 'MAESTRIA' && prog.tipo !== 'DOCTORADO';
+  const cargoUpper = (asig.cargo || '').toUpperCase();
+  const esCoordinador =
+    cargoUpper.includes('COORDINAD') || cargoUpper.includes('COORDINAC');
+  const esTiempoIntegral =
+    (docenteInfo.tipoContratacion || '').toUpperCase() === 'TIEMPO INTEGRAL';
 
-  const pagoHoraBase = Number(docenteInfo.pagoPorHora) || 0;
-  const factorProg = esDiplomado && !esCoordinador ? (Number(prog.factorSobrecupo) || 1.0) : 1.0;
+  const pagoHoraBase =
+    Number(docenteInfo.valorAjustadoHora || docenteInfo.pagoPorHora) || 0;
+  const aplicaSobrecupo = esEC && !esCoordinador;
+  const factorProg = aplicaSobrecupo
+    ? Number(prog.factorSobrecupo ?? asig.factorSobrecupo) || 1.0
+    : 1.0;
 
+  // totalHoras = horas asignadas en la programación
+  let totalHoras = 0;
+  let horasPAE = 0;
 
-  const horasSobrecupo = Number(asig.cantidadHoras) || 0;
-  const horasPAE = esDiplomado && !esCoordinador
-    ? Math.round(horasSobrecupo / factorProg * 100) / 100
+  if (asig.totalHoras !== undefined || asig.horasConSobrecupo !== undefined) {
+    totalHoras =
+      Math.round((Number(asig.totalHoras ?? asig.horasConSobrecupo) || 0) * 100) / 100;
+    horasPAE =
+      asig.horasPAE !== undefined
+        ? Math.round(Number(asig.horasPAE) * 100) / 100
+        : aplicaSobrecupo
+          ? Math.round((totalHoras / factorProg) * 100) / 100
+          : totalHoras;
+  } else if (asig.horasPAE !== undefined) {
+    horasPAE = Math.round(Number(asig.horasPAE) * 100) / 100;
+    totalHoras = aplicaSobrecupo
+      ? Math.round(horasPAE * factorProg * 100) / 100
+      : horasPAE;
+  } else {
+    totalHoras = Math.round((Number(asig.cantidadHoras) || 0) * 100) / 100;
+    horasPAE = aplicaSobrecupo
+      ? Math.round((totalHoras / factorProg) * 100) / 100
+      : totalHoras;
+  }
+
+  // Diferencia entre total de horas asignadas y horas PAE
+  const horasSobrecupo = aplicaSobrecupo
+    ? Math.max(0, Math.round((totalHoras - horasPAE) * 100) / 100)
     : 0;
 
-  const horasFacturables = esDiplomado && !esCoordinador ? horasSobrecupo : horasPAE;
+  const tarifaAplicada = esCoordinador
+    ? Number(asig.pagoPorHora) || pagoHoraBase
+    : pagoHoraBase;
 
-  let tarifaAplicada = pagoHoraBase;
   let subtotal = 0;
-
-  if (esCoordinador) {
-    tarifaAplicada = Number(asig.pagoPorHora) || pagoHoraBase;
+  if (asig.subtotal !== undefined && asig.subtotal !== null) {
+    subtotal = Math.round(Number(asig.subtotal) * 100) / 100;
+  } else if (esCoordinador) {
     subtotal = Math.round(horasPAE * tarifaAplicada * 100) / 100;
   } else if (esTiempoIntegral) {
-    const sueldo = Number(docenteInfo.sueldoNominal) || 0;
+    const sueldo = Number(docenteInfo.salarioMensual ?? docenteInfo.sueldoNominal) || 0;
     const porcentaje = (Number(docenteInfo.porcentajePago) || 13) / 100;
     const meses = Number(docenteInfo.cantidadMeses) || 1;
     subtotal = Math.round(sueldo * porcentaje * meses * 100) / 100;
   } else {
-    tarifaAplicada = pagoHoraBase;
-    subtotal = Math.round(horasFacturables * tarifaAplicada * 100) / 100;
+    subtotal = Math.round(totalHoras * tarifaAplicada * 100) / 100;
   }
 
   return {
-    esDiplomado,
+    esDiplomado: esEC,
     esCoordinador,
     esTiempoIntegral,
     factorProg,
     horasPAE,
     horasSobrecupo,
+    totalHoras,
     tarifaAplicada,
     subtotal
   };
@@ -288,7 +322,8 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
 
       const idProg = (prog.codigo || prog.nombre || '').trim().toUpperCase();
       const modCiclo = (asig.moduloCiclo || '').trim().toUpperCase();
-      const labelResumen = modCiclo ? `${idProg} - ${modCiclo}` : idProg;
+      const sufijoResumen = modCiclo || (asig.cargo || '').trim().toUpperCase();
+      const labelResumen = sufijoResumen ? `${idProg} - ${sufijoResumen}` : idProg;
 
       setCell(resumenRow, 4, labelResumen, STYLES.resumenLabel);
       setCell(resumenRow, 5, subtotal, STYLES.resumenValue, true);
@@ -356,11 +391,16 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
       );
       currentRow++;
 
-      setCell(currentRow, 1, 'MODULO/CICLO', STYLES.label);
-      setCell(currentRow, 2, (asig.moduloCiclo || '').toUpperCase(), STYLES.valueText);
-      currentRow++;
-
       if (!calc.esCoordinador) {
+        setCell(currentRow, 1, 'MODULO/CICLO', STYLES.label);
+        setCell(
+          currentRow,
+          2,
+          (asig.moduloCiclo || asig.modulo || asig.ciclo || '').toUpperCase(),
+          STYLES.valueText
+        );
+        currentRow++;
+
         setCell(currentRow, 1, 'ASIGNATURA', STYLES.label);
         setCell(currentRow, 2, (asig.asignatura || '').toUpperCase(), STYLES.valueText);
         currentRow++;
@@ -389,12 +429,19 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
       }
 
       // Horas PAE y Horas Sobrecupo por cada asignación
-      setCell(currentRow, 1, 'CANTIDAD DE HORAS (PAE)', STYLES.label);
-      setCell(currentRow, 2, calc.horasPAE, STYLES.valueText);
-      currentRow++;
+      // Desglose horario: Horas PAE, Diferencia por Sobrecupo y Total Horas Asignadas
+      if (!calc.esCoordinador) {
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS (PAE)', STYLES.label);
+        setCell(currentRow, 2, calc.horasPAE, STYLES.valueText);
+        currentRow++;
 
-      setCell(currentRow, 1, 'CANTIDAD DE HORAS (SOBRECUPO)', STYLES.label);
-      setCell(currentRow, 2, calc.horasSobrecupo, STYLES.valueText);
+        setCell(currentRow, 1, 'CANTIDAD DE HORAS (SOBRECUPO)', STYLES.label);
+        setCell(currentRow, 2, calc.horasSobrecupo, STYLES.valueText);
+        currentRow++;
+      }
+
+      setCell(currentRow, 1, 'TOTAL HORAS', STYLES.label);
+      setCell(currentRow, 2, calc.totalHoras, STYLES.valueText);
       currentRow++;
 
       setCell(currentRow, 1, 'SUBTOTAL', STYLES.label);
