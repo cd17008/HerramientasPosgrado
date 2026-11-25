@@ -131,9 +131,15 @@ const STYLES = {
 };
 
 function calcularDesgloseAsignacion({ prog, asig, docenteInfo }) {
+  const tipoProgNorm = String(prog.tipoPrograma || prog.tipo || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
   const esEC = prog.unidad
-    ? String(prog.unidad).toUpperCase() === 'EC'
-    : prog.tipo !== 'MAESTRIA' && prog.tipo !== 'DOCTORADO';
+    ? String(prog.unidad).trim().toUpperCase() === 'EC'
+    : tipoProgNorm !== 'MAESTRIA' && tipoProgNorm !== 'DOCTORADO';
+  const esMAYDOC = !esEC;
   const cargoUpper = (asig.cargo || '').toUpperCase();
   const esCoordinador =
     cargoUpper.includes('COORDINAD') || cargoUpper.includes('COORDINAC');
@@ -197,6 +203,7 @@ function calcularDesgloseAsignacion({ prog, asig, docenteInfo }) {
 
   return {
     esDiplomado: esEC,
+    esMAYDOC,
     esCoordinador,
     esTiempoIntegral,
     factorProg,
@@ -317,12 +324,15 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
 
   programas.forEach((prog, pIdx) => {
     (prog.asignaciones || []).forEach((asig, aIdx) => {
-      const { subtotal } = calcularDesgloseAsignacion({ prog, asig, docenteInfo });
+      const { subtotal, esMAYDOC } = calcularDesgloseAsignacion({ prog, asig, docenteInfo });
       totalMontoGeneral = Math.round((totalMontoGeneral + subtotal) * 100) / 100;
 
       const idProg = (prog.codigo || prog.nombre || '').trim().toUpperCase();
       const modCiclo = (asig.moduloCiclo || '').trim().toUpperCase();
-      const sufijoResumen = modCiclo || (asig.cargo || '').trim().toUpperCase();
+      const materia = (asig.asignatura || asig.materia || asig.cargo || '').trim().toUpperCase();
+      const sufijoResumen = esMAYDOC
+        ? materia
+        : modCiclo || (asig.cargo || '').trim().toUpperCase();
       const labelResumen = sufijoResumen ? `${idProg} - ${sufijoResumen}` : idProg;
 
       setCell(resumenRow, 4, labelResumen, STYLES.resumenLabel);
@@ -429,8 +439,8 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
       }
 
       // Horas PAE y Horas Sobrecupo por cada asignación
-      // Desglose horario: Horas PAE, Diferencia por Sobrecupo y Total Horas Asignadas
-      if (!calc.esCoordinador) {
+      // Solo se muestran en Educación Continua cuando el cargo no es Coordinación
+      if (!calc.esMAYDOC && !calc.esCoordinador) {
         setCell(currentRow, 1, 'CANTIDAD DE HORAS (PAE)', STYLES.label);
         setCell(currentRow, 2, calc.horasPAE, STYLES.valueText);
         currentRow++;

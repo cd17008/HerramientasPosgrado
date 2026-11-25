@@ -57,9 +57,31 @@ const obtenerTituloAsignacion = (item) => {
     .trim()
     .toUpperCase();
 
+  const unidadNorm = String(item.unidad || '').trim().toUpperCase();
+  const tipoNorm = String(item.tipoPrograma || item.tipo || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const esMAYDOC = unidadNorm
+    ? unidadNorm === 'MAYDOC'
+    : tipoNorm === 'MAESTRIA' || tipoNorm === 'DOCTORADO';
+
   const cargo = (item.cargo || '').trim().toUpperCase();
   const esCoordinador =
     cargo.includes('COORDINAD') || cargo.includes('COORDINAC');
+
+  if (esMAYDOC) {
+    const materia = (
+      item.materia ||
+      item.asignatura ||
+      (esCoordinador ? cargo || 'COORDINACIÓN' : '')
+    )
+      .trim()
+      .toUpperCase();
+    if (idProg && materia) return `${idProg} - ${materia}`;
+    return idProg || materia;
+  }
 
   const mod = esCoordinador ? '' : (item.moduloCiclo || '').trim().toUpperCase();
   const sufijo = mod || (esCoordinador ? cargo || 'COORDINACIÓN' : '');

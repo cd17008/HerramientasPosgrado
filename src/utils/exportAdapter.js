@@ -178,6 +178,8 @@ export function construirPayloadExportacion({
         const prog = mapaProgramas.get(asig.programaId) || {};
         return {
             ...asig,
+            unidad: prog.unidad || '',
+            tipoPrograma: prog.tipoPrograma || prog.tipo || '',
             programaNombre: prog.nombre || '',
             codigoPrograma: prog.codigo || '',
             moduloCiclo: asig.moduloCiclo || ''
@@ -199,7 +201,10 @@ export function construirPayloadExportacion({
             return {
                 ...s,
                 activa: true,
+                unidad: prog.unidad || '',
+                tipoPrograma: prog.tipoPrograma || prog.tipo || '',
                 cargo: s.cargo || asigOrig.cargo || '',
+                materia: s.materia || asigOrig.materia || '',
                 nombreDia: s.nombreDia || DIAS_SEMANA_NOMBRE[diaIdx] || '',
                 duracionHoras: Number(s.duracionHoras ?? s.horas) || 0,
                 programaNombre: prog.nombre || '',

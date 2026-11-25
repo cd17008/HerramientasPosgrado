@@ -368,7 +368,7 @@ export default function ModalAsignacion({
                                         step="0.01"
                                         min="0"
                                         required
-                                        value={12.50}
+                                        value={form.pagoPorHora}
                                         onChange={(e) => setForm({ ...form, pagoPorHora: e.target.value })}
                                         className={`${INPUT_CLASS} font-mono`}
                                     />
