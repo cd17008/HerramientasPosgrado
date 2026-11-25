@@ -136,7 +136,7 @@ export function buildHorariosSheet({ asignaciones, sesiones }) {
         const etiqueta = `${nombreDia} ${dt.getDate()} de ${nombreMes}`;
         const rango = ex.tipo === 'MODIFICAR'
           ? `${formatTime12h(ex.horaInicio)} a ${formatTime12h(ex.horaFin)}`
-          : 'Clase cancelada';
+          : 'Sin actividad';
 
         rightRows.push([etiqueta, rango]);
         rightMeta.push('data');

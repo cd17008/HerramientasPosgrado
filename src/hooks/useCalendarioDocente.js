@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import {
     generarTodasLasSesiones,
@@ -64,6 +64,62 @@ export function useCalendarioDocente() {
         onConfirmar: null
     });
     const [modalExportarAbierto, setModalExportarAbierto] = useState(false);
+
+    // Cerrar el modal activo al presionar la tecla Escape
+    useEffect(() => {
+        const hayModalAbierto =
+            modalConfirmacion.abierto ||
+            Boolean(modalExcepcion) ||
+            modalAsignacion.abierto ||
+            modalPrograma.abierto ||
+            modalDocenteAbierto ||
+            modalCargarAbierto ||
+            modalExportarAbierto;
+
+        if (!hayModalAbierto) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key !== 'Escape') return;
+            e.preventDefault();
+
+            // Prioridad 1: Modal de confirmación (z-[60], puede estar sobre otro modal)
+            if (modalConfirmacion.abierto) {
+                setModalConfirmacion((prev) => ({ ...prev, abierto: false }));
+                return;
+            }
+
+            // Prioridad 2: Modales operativos y de exportación
+            if (modalExcepcion) {
+                setModalExcepcion(null);
+            } else if (modalAsignacion.abierto) {
+                setModalAsignacion({
+                    abierto: false,
+                    modo: 'crear',
+                    datos: null,
+                    programaIdPreseleccionado: null
+                });
+            } else if (modalPrograma.abierto) {
+                setModalPrograma({ abierto: false, modo: 'crear', datos: null });
+            } else if (modalDocenteAbierto) {
+                setModalDocenteAbierto(false);
+            } else if (modalCargarAbierto) {
+                setModalCargarAbierto(false);
+            } else if (modalExportarAbierto) {
+                setModalExportarAbierto(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [
+        modalConfirmacion.abierto,
+        modalExcepcion,
+        modalAsignacion.abierto,
+        modalPrograma.abierto,
+        modalDocenteAbierto,
+        modalCargarAbierto,
+        modalExportarAbierto
+    ]);
 
     // 4. Cálculos memoizados
     const todasLasSesiones = useMemo(
@@ -411,4 +467,5 @@ export function useCalendarioDocente() {
         cargarRespaldoDesdeArchivo,
         solicitarLimpiarTodo
     };
+
 }
