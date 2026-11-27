@@ -53,6 +53,70 @@ const DIAS_ORDEN = [
   { id: 0, nombre: 'Domingo' }
 ];
 
+const NOMBRES_DIAS_MIN = [
+  'domingo',
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado'
+];
+
+const MESES_CORTOS = [
+  'ene.',
+  'feb.',
+  'mar.',
+  'abr.',
+  'may.',
+  'jun.',
+  'jul.',
+  'ago.',
+  'sep.',
+  'oct.',
+  'nov.',
+  'dic.'
+];
+
+function unirConComasYY(items = []) {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} y ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
+}
+
+function agruparFechasCanceladasPorDia(excepciones = {}) {
+  const gruposPorDia = new Map(); // dayOfWeek (0..6) -> [{ day, mesCorto }]
+
+  Object.entries(excepciones)
+    .filter(([, excep]) => excep && excep.tipo === 'CANCELAR')
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([fechaIso]) => {
+      const [year, month, day] = fechaIso.split('-').map(Number);
+      const fecha = new Date(year, month - 1, day);
+      const dayOfWeek = fecha.getDay();
+
+      if (!gruposPorDia.has(dayOfWeek)) {
+        gruposPorDia.set(dayOfWeek, []);
+      }
+      gruposPorDia.get(dayOfWeek).push(`${day} ${MESES_CORTOS[month - 1]}`);
+    });
+
+  // Ordenar de lunes (1) a domingo (0)
+  const ordenDias = [1, 2, 3, 4, 5, 6, 0];
+  const lineasCanceladas = [];
+
+  ordenDias.forEach((dayOfWeek) => {
+    const listaFechas = gruposPorDia.get(dayOfWeek);
+    if (!listaFechas || listaFechas.length === 0) return;
+
+    const nombreDia = NOMBRES_DIAS_MIN[dayOfWeek];
+    lineasCanceladas.push(`${nombreDia} ${unirConComasYY(listaFechas)}`);
+  });
+
+  return lineasCanceladas;
+}
+
 const formatearHora12 = (hora24) => {
   if (!hora24) return '';
   const [hStr, mStr] = hora24.split(':');
@@ -219,31 +283,39 @@ export function buildHorariosSheet({ docenteInfo = {}, asignaciones = [], sesion
     rightRows.push(['Día', 'Horario']);
     rightMeta.push('header');
 
-    DIAS_ORDEN.forEach((dia) => {
-      const cfg = asig.dias?.[dia.id];
-      if (cfg && cfg.activo) {
+    // 1. Días base regulares (Lunes a Domingo)
+    DIAS_ORDEN.forEach(({ id, nombre }) => {
+      const cfg = asig.dias?.[id];
+      if (cfg?.activo && cfg.horaInicio && cfg.horaFin) {
         rightRows.push([
-          dia.nombre,
+          nombre,
           `${formatearHora12(cfg.horaInicio)} a ${formatearHora12(cfg.horaFin)}`
         ]);
-        rightMeta.push('data');
+        rightMeta.push('row');
       }
     });
 
-    // Excepciones puntuales modificadas
-    const excepcionesModificadas = Object.entries(asig.excepciones || {})
-      .filter(([, ex]) => ex?.tipo === 'MODIFICAR')
-      .sort(([f1], [f2]) => f1.localeCompare(f2));
+    // 2. Días puntuales con horario ajustado (MODIFICAR)
+    Object.entries(asig.excepciones || {})
+      .filter(([, excep]) => excep && excep.tipo === 'MODIFICAR')
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([fechaIso, excep]) => {
+        const [year, month, day] = fechaIso.split('-').map(Number);
+        const fecha = new Date(year, month - 1, day);
+        const etiquetaDia = `${NOMBRES_DIAS_MIN[fecha.getDay()]} ${day} ${MESES_CORTOS[month - 1]}`;
 
-    excepcionesModificadas.forEach(([fechaIso, ex]) => {
-      const [y, m, d] = fechaIso.split('-').map(Number);
-      const dt = new Date(y, m - 1, d);
-      const diaNombre = DIAS_ORDEN.find((item) => item.id === dt.getDay())?.nombre || '';
-      rightRows.push([
-        `${diaNombre} ${formatearFechaCorta(fechaIso)}`,
-        `${formatearHora12(ex.horaInicio)} a ${formatearHora12(ex.horaFin)}`
-      ]);
-      rightMeta.push('data');
+        rightRows.push([
+          etiquetaDia,
+          `${formatearHora12(excep.horaInicio)} a ${formatearHora12(excep.horaFin)}`
+        ]);
+        rightMeta.push('row');
+      });
+
+    // 3. Días cancelados agrupados por día de la semana (CANCELAR)
+    const gruposCancelados = agruparFechasCanceladasPorDia(asig.excepciones || {});
+    gruposCancelados.forEach((textoAgrupado) => {
+      rightRows.push([textoAgrupado, 'Sin asignación']);
+      rightMeta.push('cancelled');
     });
   });
 

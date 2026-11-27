@@ -1,117 +1,21 @@
 {
-  "categoriasDocente": [
-    {
-      "id": "F1",
-      "tasaHora": 18.75
+  "escalafonF": {
+    "F1": 18.75, "F2": 18.75,
+    "F3": 20.00, "F4": 20.00,
+    "F5": 22.50, "F6": 22.50, "F7": 22.50, "F8": 22.50, "F9": 22.50
+  },
+  "maestriasDoctorados": {
+    "NACIONAL": {
+      "MAESTRIA": 25.00,
+      "DOCTORADO": 30.00
     },
-    {
-      "id": "F2",
-      "tasaHora": 18.75
-    },
-    {
-      "id": "F3",
-      "tasaHora": 20
-    },
-    {
-      "id": "F4",
-      "tasaHora": 20
-    },
-    {
-      "id": "F5",
-      "tasaHora": 22.5
-    },
-    {
-      "id": "F6",
-      "tasaHora": 22.5
-    },
-    {
-      "id": "F7",
-      "tasaHora": 22.5
-    },
-    {
-      "id": "F8",
-      "tasaHora": 22.5
-    },
-    {
-      "id": "F9",
-      "tasaHora": 22.5
+    "EXTRANJERO": {
+      "MAESTRIA": 30.00,
+      "DOCTORADO": 35.00
     }
-  ],
-  "factoresSobrecupo": [
-    {
-      "clasificacion": "A",
-      "tramos": [
-        {
-          "factor": 1,
-          "maxAlumnos": 30,
-          "etiqueta": "30"
-        },
-        {
-          "factor": 1.25,
-          "maxAlumnos": 45,
-          "etiqueta": "45"
-        },
-        {
-          "factor": 1.5,
-          "maxAlumnos": 70,
-          "etiqueta": "70"
-        },
-        {
-          "factor": 2,
-          "maxAlumnos": null,
-          "etiqueta": "> 71"
-        }
-      ]
-    },
-    {
-      "clasificacion": "B",
-      "tramos": [
-        {
-          "factor": 1,
-          "maxAlumnos": 35,
-          "etiqueta": "35"
-        },
-        {
-          "factor": 1.25,
-          "maxAlumnos": 50,
-          "etiqueta": "50"
-        },
-        {
-          "factor": 1.5,
-          "maxAlumnos": 70,
-          "etiqueta": "70"
-        },
-        {
-          "factor": 2,
-          "maxAlumnos": null,
-          "etiqueta": "> 71"
-        }
-      ]
-    },
-    {
-      "clasificacion": "C",
-      "tramos": [
-        {
-          "factor": 1,
-          "maxAlumnos": 40,
-          "etiqueta": "40"
-        },
-        {
-          "factor": 1.25,
-          "maxAlumnos": 60,
-          "etiqueta": "60"
-        },
-        {
-          "factor": 1.5,
-          "maxAlumnos": 70,
-          "etiqueta": "70"
-        },
-        {
-          "factor": 2,
-          "maxAlumnos": null,
-          "etiqueta": "> 71"
-        }
-      ]
-    }
-  ]
+  },
+  "reglasEspeciales": {
+    "coordinadorEC": 12.50,
+    "asesorTesisMonto": 500.00
+  }
 }

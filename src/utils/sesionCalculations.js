@@ -3,6 +3,8 @@ import { timeToMinutes, formatDateIso, getMondayIso } from './dateUtils';
 
 const TEXTO_COORDINACION =
     'Liderar la gestión estratégica y operativa de la maestría mediante la planificación, rendición de cuentas y coordinación de recursos logísticos.';
+const TARIFA_COORDINADOR_EC = 12.50;
+const MONTO_ASESOR_TESIS = 500.00;
 
 export function esProgramaEC(programa) {
     if (!programa) return false;
@@ -97,13 +99,91 @@ export function calcularPagoAsignacion({
     horasBase = 0,
     sesionesAsig = []
 }) {
-    const tipoContratacion = normalizarTexto(docenteInfo.tipoContratacion || 'TIEMPO NORMAL');
-    const esTiempoAdicional = tipoContratacion === 'TIEMPO ADICIONAL';
-    const esTiempoIntegral = tipoContratacion === 'TIEMPO INTEGRAL';
+    const tipoContrato = (docenteInfo.tipoContrato || '').toUpperCase();
+    const tipoContratacion = (docenteInfo.tipoContratacion || 'TIEMPO NORMAL').toUpperCase();
+
+    const esServiciosPersonales =
+        tipoContrato === 'SERVICIOS PERSONALES' ||
+        tipoContratacion === 'TIEMPO ADICIONAL' ||
+        tipoContratacion === 'TIEMPO INTEGRAL';
 
     const esEC = esProgramaEC(programa);
-    // Dentro de calcularPagoAsignacion:
-    const esCoordinador = normalizarTexto(asig.cargo || '').includes('COORDIN');
+    const cargoUpper = (asig.cargo || '').toUpperCase();
+    const esCoordinador = cargoUpper.includes('COORDINAD');
+    const esAsesorTesis = cargoUpper.includes('ASESOR') || cargoUpper.includes('TESIS');
+
+    // =========================================================================
+    // REGLA 1: SERVICIOS PERSONALES (Se impone sin importar el tipo de programa)
+    // =========================================================================
+    if (esServiciosPersonales) {
+        if (tipoContratacion === 'TIEMPO INTEGRAL') {
+            const salarioMensual = Number(docenteInfo.salarioMensual ?? docenteInfo.sueldoNominal) || 0;
+            const porcentajePago = Number(docenteInfo.porcentajePago) || 13;
+            const valorPorMes =
+                Number(docenteInfo.valorPorMes) ||
+                Math.round(salarioMensual * (porcentajePago / 100) * 100) / 100;
+
+            const horasSemanalesBase = calcularHorasSemanalesBase(asig.dias);
+            const evalIntegral = evaluarMesesTiempoIntegral({
+                sesionesAsig,
+                horasSemanalesBase,
+                valorPorMes
+            });
+
+            return {
+                modalidadCalculo: 'TIEMPO_INTEGRAL',
+                factorSobrecupo: 1.0,
+                horasPAE: Math.round(horasBase * 100) / 100,
+                horasSobrecupo: 0,
+                horasFacturables: Math.round(horasBase * 100) / 100,
+                tarifaAplicada: 0,
+                valorPorMes,
+                horasSemanalesBase,
+                mesesCompletos: evalIntegral.mesesCompletos,
+                mesesIncompletos: evalIntegral.mesesIncompletos,
+                totalMesesEvaluados: evalIntegral.totalMesesEvaluados,
+                detalleMesesIntegral: evalIntegral.detalleMeses,
+                subtotal: evalIntegral.montoTotal
+            };
+        }
+
+        // SERVICIOS PERSONALES - TIEMPO ADICIONAL (75% salario/160, máx 40h/mes)
+        // Se impone la tarifa ajustada incluso si es Coordinador o Maestría
+        const salario = Number(docenteInfo.salario) || 0;
+        const porcentajePago = Number(docenteInfo.porcentajePago) || 75;
+        const valorHoraBase = salario > 0 ? Math.round((salario / 160) * 100) / 100 : 0;
+        const tarifaAjustada =
+            Number(docenteInfo.valorAjustadoHora) ||
+            Math.round(valorHoraBase * (porcentajePago / 100) * 100) / 100 ||
+            Number(docenteInfo.pagoPorHora) ||
+            0;
+
+        const horasAsignadas = Math.round(horasBase * 100) / 100;
+        const subtotal = Math.round(horasAsignadas * tarifaAjustada * 100) / 100;
+
+        return {
+            modalidadCalculo: 'TIEMPO_ADICIONAL',
+            factorSobrecupo: 1.0,
+            horasPAE: horasAsignadas,
+            horasSobrecupo: 0,
+            horasFacturables: horasAsignadas,
+            tarifaAplicada: tarifaAjustada,
+            valorPorMes: 0,
+            horasSemanalesBase: calcularHorasSemanalesBase(asig.dias),
+            mesesCompletos: 0,
+            mesesIncompletos: 0,
+            totalMesesEvaluados: 0,
+            detalleMesesIntegral: [],
+            subtotal
+        };
+    }
+
+    // =========================================================================
+    // REGLA 2: SERVICIOS PROFESIONALES - TIEMPO NORMAL (Depende del programa)
+    // =========================================================================
+    // =========================================================================
+    // REGLA 2: SERVICIOS PROFESIONALES - TIEMPO NORMAL
+    // =========================================================================
     const aplicaSobrecupo = esEC && !esCoordinador;
     const factorSobrecupo = aplicaSobrecupo ? Number(programa?.factorSobrecupo) || 1.0 : 1.0;
 
@@ -112,79 +192,104 @@ export function calcularPagoAsignacion({
         ? Math.round((horasAsignadas / factorSobrecupo) * 100) / 100
         : horasAsignadas;
     const horasSobrecupo = aplicaSobrecupo ? horasAsignadas : 0;
-    const horasFacturables = horasAsignadas;
 
-    if (esTiempoIntegral && !esCoordinador) {
-        const salarioMensual = Number(docenteInfo.salarioMensual ?? docenteInfo.sueldoNominal) || 0;
-        const porcentajePago = Number(docenteInfo.porcentajePago) || 0;
-        const valorPorMesCalc = Math.round(salarioMensual * (porcentajePago / 100) * 100) / 100;
-        const valorPorMes = Number(docenteInfo.valorPorMes) || valorPorMesCalc;
+    // Caso 2.1: Coordinador (Aplica $12.50/h tanto en EC como en MAYDOC)
+    if (esCoordinador) {
+        const tieneTarifaManual =
+            asig.pagoPorHora !== undefined &&
+            asig.pagoPorHora !== null &&
+            String(asig.pagoPorHora).trim() !== '' &&
+            !Number.isNaN(Number(asig.pagoPorHora));
 
-        const horasSemanalesBase = calcularHorasSemanalesBase(asig.dias);
-        const evalIntegral = evaluarMesesTiempoIntegral({
-            sesionesAsig,
-            horasSemanalesBase,
-            valorPorMes
-        });
+        const tarifaCoord = tieneTarifaManual
+            ? Number(asig.pagoPorHora)
+            : TARIFA_COORDINADOR_SP; // $12.50 por hora
+
+        const subtotalCoord = Math.round(horasPAE * tarifaCoord * 100) / 100;
 
         return {
-            modalidadCalculo: 'TIEMPO_INTEGRAL',
+            modalidadCalculo: esEC ? 'TIEMPO_NORMAL_EC_COORD' : 'TIEMPO_NORMAL_POSGRADO_COORD',
             factorSobrecupo: 1.0,
             horasPAE,
             horasSobrecupo: 0,
             horasFacturables: horasPAE,
-            tarifaAplicada: 0,
-            valorPorMes,
-            horasSemanalesBase,
-            mesesCompletos: evalIntegral.mesesCompletos,
-            mesesIncompletos: evalIntegral.mesesIncompletos,
-            totalMesesEvaluados: evalIntegral.totalMesesEvaluados,
-            detalleMesesIntegral: evalIntegral.detalleMeses,
-            subtotal: evalIntegral.montoTotal
+            tarifaAplicada: tarifaCoord,
+            valorPorMes: 0,
+            horasSemanalesBase: calcularHorasSemanalesBase(asig.dias),
+            mesesCompletos: 0,
+            mesesIncompletos: 0,
+            totalMesesEvaluados: 0,
+            detalleMesesIntegral: [],
+            subtotal: subtotalCoord
         };
     }
 
-    // Tarifa base del docente (Tiempo Adicional o Tiempo Normal)
-    const salario = Number(docenteInfo.salario) || 0;
-    const porcentajePago = Number(docenteInfo.porcentajePago) || 0;
-    const valorHoraCalc = salario > 0 ? Math.round((salario / 160) * 100) / 100 : 0;
-    const valorAjustadoCalc = Math.round(valorHoraCalc * (porcentajePago / 100) * 100) / 100;
+    // Caso 2.2: Docente en Educación Continua (Clasificación F1-F9 + Sobrecupo)
+    if (esEC) {
+        const tarifaEC = Number(docenteInfo.pagoPorHoraEC ?? docenteInfo.pagoPorHora) || 0;
+        const subtotalEC = Math.round(horasAsignadas * tarifaEC * 100) / 100;
 
-    const tarifaBase = esTiempoAdicional
-        ? Number(docenteInfo.valorAjustadoHora) || valorAjustadoCalc || Number(docenteInfo.pagoPorHora) || 0
-        : Number(docenteInfo.pagoPorHora) || 0;
+        return {
+            modalidadCalculo: 'TIEMPO_NORMAL_EC',
+            factorSobrecupo,
+            horasPAE,
+            horasSobrecupo,
+            horasFacturables: horasAsignadas,
+            tarifaAplicada: tarifaEC,
+            valorPorMes: 0,
+            horasSemanalesBase: calcularHorasSemanalesBase(asig.dias),
+            mesesCompletos: 0,
+            mesesIncompletos: 0,
+            totalMesesEvaluados: 0,
+            detalleMesesIntegral: [],
+            subtotal: subtotalEC
+        };
+    }
 
-    // Prioridad a la tarifa específica de Coordinación si existe un valor numérico
-    // Prioridad a la tarifa específica de Coordinación (por defecto $12.00 si no se ha definido)
-    const tieneTarifaCoord =
-        asig.pagoPorHora !== undefined &&
-        asig.pagoPorHora !== null &&
-        String(asig.pagoPorHora).trim() !== '' &&
-        !Number.isNaN(Number(asig.pagoPorHora));
+    // Caso 2.3: Maestrías y Doctorados (Docente o Asesor de Tesis: grado académico y nacionalidad)
+    const tarifaPosgrado =
+        Number(asig.pagoPorHora) ||
+        Number(docenteInfo.pagoPorHoraPosgrado ?? docenteInfo.pagoPorHora) ||
+        0;
 
-    const tarifaAplicada = esCoordinador
-        ? tieneTarifaCoord
-            ? Number(asig.pagoPorHora)
-            : 12
-        : tarifaBase;
+    if (esAsesorTesis) {
+        const montoFijo = Number(asig.montoFijo) || MONTO_ASESOR_TESIS;
+        const horasCalculadasTesis =
+            tarifaPosgrado > 0 ? Math.round((montoFijo / tarifaPosgrado) * 100) / 100 : 0;
 
-    const horasParaPago = esCoordinador ? horasPAE : horasFacturables;
-    const subtotal = Math.round(horasParaPago * tarifaAplicada * 100) / 100;
+        return {
+            modalidadCalculo: 'ASESOR_TESIS',
+            factorSobrecupo: 1.0,
+            horasPAE: horasCalculadasTesis,
+            horasSobrecupo: 0,
+            horasFacturables: horasCalculadasTesis,
+            tarifaAplicada: tarifaPosgrado,
+            valorPorMes: 0,
+            horasSemanalesBase: 0,
+            mesesCompletos: 0,
+            mesesIncompletos: 0,
+            totalMesesEvaluados: 0,
+            detalleMesesIntegral: [],
+            subtotal: montoFijo
+        };
+    }
+
+    const subtotalPosgrado = Math.round(horasPAE * tarifaPosgrado * 100) / 100;
 
     return {
-        modalidadCalculo: esTiempoAdicional ? 'TIEMPO_ADICIONAL' : 'TIEMPO_NORMAL',
-        factorSobrecupo,
+        modalidadCalculo: 'TIEMPO_NORMAL_POSGRADO',
+        factorSobrecupo: 1.0,
         horasPAE,
-        horasSobrecupo,
-        horasFacturables: horasParaPago,
-        tarifaAplicada,
+        horasSobrecupo: 0,
+        horasFacturables: horasPAE,
+        tarifaAplicada: tarifaPosgrado,
         valorPorMes: 0,
         horasSemanalesBase: calcularHorasSemanalesBase(asig.dias),
         mesesCompletos: 0,
         mesesIncompletos: 0,
         totalMesesEvaluados: 0,
         detalleMesesIntegral: [],
-        subtotal
+        subtotal: subtotalPosgrado
     };
 }
 /**

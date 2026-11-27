@@ -131,9 +131,14 @@ export default function ModalAsignacion({
         [programaActual]
     );
 
+    const esServiciosPersonales =
+        (docente?.tipoContrato || '').toUpperCase() === 'SERVICIOS PERSONALES' ||
+        ['TIEMPO ADICIONAL', 'TIEMPO INTEGRAL'].includes(
+            (docente?.tipoContratacion || '').toUpperCase()
+        );
+
     const previewCalculo = useMemo(() => {
         if (!form.fechaInicio || !form.fechaFin) return null;
-
         const asigTemp = {
             id: 'preview',
             programaId: form.programaId,
@@ -163,6 +168,17 @@ export default function ModalAsignacion({
         });
     }, [form, programas, docente, datosIniciales, esCoordinador]);
 
+    const resolverTarifaPorDefecto = (programaId, cargo) => {
+        if (esServiciosPersonales) return '';
+        if (esCargoCoordinacion(cargo)) return TARIFA_COORDINACION_DEFAULT; // $12.50 en EC y MAYDOC
+
+        const prog = programas.find((p) => p.id === programaId) || null;
+        if (esProgramaEC(prog)) {
+            return Number(docente?.pagoPorHoraEC ?? docente?.pagoPorHora) || 0;
+        }
+        return Number(docente?.pagoPorHoraPosgrado ?? docente?.pagoPorHora) || 0;
+    };
+
     const handleProgramaChange = (nuevoProgramaId) => {
         const nuevoProg = programas.find((p) => p.id === nuevoProgramaId) || null;
         const nuevoEsEC = esProgramaEC(nuevoProg);
@@ -172,27 +188,22 @@ export default function ModalAsignacion({
             const cargoActualizado = nuevosCargos.includes(prev.cargo)
                 ? prev.cargo
                 : nuevosCargos[0] || 'DOCENTE';
-            const seraCoordinador = esCargoCoordinacion(cargoActualizado);
 
             return {
                 ...prev,
                 programaId: nuevoProgramaId,
                 cargo: cargoActualizado,
-                pagoPorHora:
-                    seraCoordinador && !esCargoCoordinacion(prev.cargo)
-                        ? TARIFA_COORDINACION_DEFAULT
-                        : prev.pagoPorHora,
+                pagoPorHora: resolverTarifaPorDefecto(nuevoProgramaId, cargoActualizado),
                 moduloCompleto: nuevoEsEC ? prev.moduloCompleto : false
             };
         });
     };
 
     const handleCargoChange = (nuevoCargo) => {
-        const seraCoordinador = esCargoCoordinacion(nuevoCargo);
         setForm((prev) => ({
             ...prev,
             cargo: nuevoCargo,
-            pagoPorHora: seraCoordinador ? TARIFA_COORDINACION_DEFAULT : prev.pagoPorHora
+            pagoPorHora: resolverTarifaPorDefecto(prev.programaId, nuevoCargo)
         }));
     };
 
