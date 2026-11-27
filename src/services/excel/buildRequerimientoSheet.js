@@ -269,10 +269,12 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
   const tieneDiplomado = programas.some(
     (p) => p.tipo === 'DIPLOMADO' || p.nombre?.toUpperCase().includes('DIPLOMADO')
   );
+  const tipoContratacionUpper = (docenteInfo.tipoContratacion || '').toUpperCase();
+  const esTiempoAdicional = tipoContratacionUpper === 'TIEMPO ADICIONAL';
 
   const infoDocenteFilas = [
-    { label: 'TIPO DE CONTRATO', value: docenteInfo.tipoContrato || 'SERVICIOS PROFESIONALES NO PERSONALES' },
-    { label: 'TIPO DE CONTRATACION', value: docenteInfo.tipoContratacion || 'TIEMPO NORMAL' },
+    { label: 'TIPO DE CONTRATO', value: (docenteInfo.tipoContrato || 'SERVICIOS PROFESIONALES NO PERSONALES').toUpperCase() },
+    { label: 'TIPO DE CONTRATACION', value: tipoContratacionUpper },
     { label: 'NOMBRE DEL CONTRATADO', value: (docenteInfo.nombreCompleto || '').toUpperCase() },
     { label: 'PROFESION', value: (docenteInfo.profesion || '').toUpperCase() },
     { label: 'NACIONALIDAD', value: (docenteInfo.nacionalidad || '').toUpperCase() },
@@ -282,10 +284,30 @@ export function buildRequerimientoSheet({ docenteInfo = {}, programas = [] }) {
   ];
 
   if (esTiempoIntegral) {
+    const salarioMensual = Number(docenteInfo.salarioMensual ?? docenteInfo.sueldoNominal) || 0;
+    const porcentaje = Number(docenteInfo.porcentajePago) || 0;
+    const valorMes = Number(docenteInfo.valorPorMes) || Math.round(salarioMensual * (porcentaje / 100) * 100) / 100;
+
     infoDocenteFilas.push(
-      { label: 'SUELDO NOMINAL', value: Number(docenteInfo.sueldoNominal) || 0, isCurrency: true },
-      { label: 'PORCENTAJE A PAGAR', value: `${Number(docenteInfo.porcentajePago) || 13}%` },
-      { label: 'CANTIDAD DE MESES', value: Number(docenteInfo.cantidadMeses) || 1 }
+      { label: 'SALARIO MENSUAL', value: salarioMensual, isCurrency: true },
+      { label: 'PORCENTAJE A PAGAR', value: `${porcentaje}%` },
+      { label: 'VALOR POR MES', value: valorMes, isCurrency: true }
+    );
+  } else if (esTiempoAdicional) {
+    const salario = Number(docenteInfo.salario) || 0;
+    const pagoHoraBase = Number(docenteInfo.valorPorHora) || (salario > 0 ? Math.round((salario / 160) * 100) / 100 : 0);
+    const porcentaje = Number(docenteInfo.porcentajePago) || 0;
+    const pagoHoraAjustado =
+      Number(docenteInfo.valorAjustadoHora) ||
+      Math.round(pagoHoraBase * (porcentaje / 100) * 100) / 100 ||
+      Number(docenteInfo.pagoPorHora) ||
+      0;
+
+    infoDocenteFilas.push(
+      { label: 'ESCALAFÓN', value: (docenteInfo.escalafon || '').toUpperCase() },
+      { label: 'PAGO POR HORA', value: pagoHoraBase, isCurrency: true },
+      { label: 'PORCENTAJE A PAGAR', value: `${porcentaje}%` },
+      { label: 'PAGO POR HORA AJUSTADO', value: pagoHoraAjustado, isCurrency: true }
     );
   } else {
     if (tieneDiplomado) {
